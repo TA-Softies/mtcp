@@ -110,14 +110,14 @@ function Show-UpdateNotification {
     Write-Host "  " -NoNewline
     Write-Host "[U]" -ForegroundColor Black -BackgroundColor White -NoNewline
     Write-Host " Press U to Update  " -ForegroundColor White -NoNewline
-    Write-Host "[ESC]" -ForegroundColor Black -BackgroundColor White -NoNewline
-    Write-Host " Press ESC to Skip" -ForegroundColor White
+    Write-Host "[ENTER]" -ForegroundColor Black -BackgroundColor White -NoNewline
+    Write-Host " Press ENTER to Skip" -ForegroundColor White
     Write-Host ""
     
-    # Wait for U or ESC key
+    # Wait for U or ENTER key
     while ($true) {
         $key = [Console]::ReadKey($true)
-        if ($key.Key -eq "Escape") {
+        if ($key.Key -eq "Enter") {
             # Reset colors
             $Host.UI.RawUI.BackgroundColor = "Black"
             $Host.UI.RawUI.ForegroundColor = "White"
@@ -655,7 +655,35 @@ while ($running) {
         }
         "Escape" {
             if ($currentView -eq "categories") {
-                $running = $false
+                # Show exit confirmation
+                Clear-Host
+                Write-Host ""
+                Write-Host ""
+                Write-Host "  ========================================================================" -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "                  Are you sure you want to exit?" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "  ========================================================================" -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "  " -NoNewline
+                Write-Host "[Y]" -ForegroundColor Black -BackgroundColor White -NoNewline
+                Write-Host " Yes, Exit  " -ForegroundColor White -NoNewline
+                Write-Host "[N]" -ForegroundColor Black -BackgroundColor White -NoNewline
+                Write-Host " No, Go Back" -ForegroundColor White
+                Write-Host ""
+                
+                # Wait for Y or N key
+                while ($true) {
+                    $confirmKey = [Console]::ReadKey($true)
+                    $confirmChar = $confirmKey.KeyChar.ToString().ToUpper()
+                    if ($confirmChar -eq "Y") {
+                        $running = $false
+                        break
+                    } elseif ($confirmChar -eq "N" -or $confirmKey.Key -eq "Escape") {
+                        $needsFullRedraw = $true
+                        break
+                    }
+                }
             }
             elseif ($currentView -eq "subcategories") {
                 $currentView = "categories"
