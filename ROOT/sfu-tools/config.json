@@ -1,0 +1,127 @@
+{
+    "meta": {
+        "version": "0.1.0",
+        "author": "TA Software Functional Unit."
+    },
+    "categories": [
+        {
+            "name": "Troubleshooting",
+            "description": "Diagnose and fix system, disk, and network issues",
+            "subcategories": [
+                {
+                    "name": "System",
+                    "tools": [
+                        {
+                            "name": "System File Checker (SFC)",
+                            "description": "Scan and repair corrupted system files",
+                            "command": "sfc /scannow"
+                        },
+                        {
+                            "name": "DISM - Repair Windows Image",
+                            "description": "Fix Windows image corruption",
+                            "command": "DISM /Online /Cleanup-Image /RestoreHealth"
+                        },
+                        {
+                            "name": "Windows Memory Diagnostic",
+                            "description": "Test RAM for hardware errors",
+                            "command": "mdsched.exe"
+                        },
+                        {
+                            "name": "Windows Update Troubleshooter",
+                            "description": "Fix Windows Update issues",
+                            "command": "msdt.exe /id WindowsUpdateDiagnostic"
+                        }
+                    ]
+                },
+                {
+                    "name": "Disk",
+                    "tools": [
+                        {
+                            "name": "Check Disk (Interactive)",
+                            "description": "Scan and repair disk errors",
+                            "command": "powershell.exe -ExecutionPolicy Bypass -File \"$PSScriptRoot\\sfu-tools\\Invoke-CheckDisk.ps1\""
+                        },
+                        {
+                            "name": "Disk Cleanup Utility",
+                            "description": "Free up disk space by removing temporary files",
+                            "command": "cleanmgr.exe"
+                        },
+                        {
+                            "name": "Defragment and Optimize Drives",
+                            "description": "Optimize drive performance",
+                            "command": "dfrgui.exe"
+                        }
+                    ]
+                },
+                {
+                    "name": "Network",
+                    "tools": [
+                        {
+                            "name": "Network Reset",
+                            "description": "Reset all network adapters and settings",
+                            "command": "ipconfig /release & ipconfig /flushdns & ipconfig /renew & netsh winsock reset & netsh int ip reset"
+                        },
+                        {
+                            "name": "IP Configuration Details",
+                            "description": "Display detailed network configuration",
+                            "command": "ipconfig /all & pause"
+                        },
+                        {
+                            "name": "Network Troubleshooter",
+                            "description": "Diagnose and fix network problems",
+                            "command": "msdt.exe /id NetworkDiagnosticsWeb"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Maintenance",
+            "description": "Perform routine system maintenance tasks",
+            "tools": [
+                {
+                    "name": "Update Wallpaper",
+                    "description": "Change the desktop wallpaper",
+                    "command": "powershell.exe -ExecutionPolicy Bypass -File \"$PSScriptRoot\\sfu-tools\\Set-Wallpaper.ps1\"",
+                    "hotkey": "W"
+                }
+            ]
+        },
+        {
+            "name": "System Tools",
+            "description": "Access advanced system management utilities",
+            "tools": [
+                {
+                    "name": "Device Manager [Launch]",
+                    "description": "Manage hardware devices and drivers",
+                    "command": "devmgmt.msc"
+                },
+                {
+                    "name": "Event Viewer [Launch]",
+                    "description": "View system and application logs",
+                    "command": "eventvwr.msc"
+                },
+                {
+                    "name": "System Information [Launch]",
+                    "description": "View detailed system information",
+                    "command": "msinfo32.exe"
+                },
+                {
+                    "name": "Task Manager [Launch]",
+                    "description": "Monitor and manage running processes",
+                    "command": "taskmgr.exe"
+                },
+                {
+                    "name": "Services Manager [Launch]",
+                    "description": "Manage Windows services",
+                    "command": "services.msc"
+                },
+                {
+                    "name": "Disk Management [Launch]",
+                    "description": "Manage disk partitions and volumes",
+                    "command": "diskmgmt.msc"
+                }
+            ]
+        }
+    ]
+}

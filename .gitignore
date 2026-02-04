@@ -1,0 +1,62 @@
+# Windows and PowerShell temporary files
+*.tmp
+*.log
+*.bak
+~$*
+*.swp
+
+# PowerShell session state
+*_history.txt
+*.psess
+*.vsp
+*.vspx
+
+# User-specific files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosslcache
+*.sln.docstates
+
+# Sensitive configuration files (if any)
+*.credentials
+*.secrets
+*password*
+*secret*
+
+# Deep Freeze specific (password files)
+DFPassword.txt
+df-config.txt
+
+# Backup files
+*.backup
+backup/
+Backup/
+
+# Temporary download folders
+temp/
+tmp/
+downloads/
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+._*
+
+# Python cache (for code.py if used)
+__pycache__/
+*.py[cod]
+*.pyo
+
+# CircuitPython specific
+.Trashes
+.fseventsd
+.TemporaryItems
+.Spotlight-V100
+
+# Custom exclusions for sensitive data
+# Add your organization-specific files below:
+# company-credentials.json
+# internal-config.xml
