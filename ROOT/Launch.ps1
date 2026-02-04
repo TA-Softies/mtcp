@@ -80,6 +80,59 @@ function Show-BSOD {
     Exit
 }
 
+function Show-UpdateNotification {
+    param(
+        [string]$CurrentVersion,
+        [string]$NewVersion,
+        [string]$DownloadUrl
+    )
+    
+    $Host.UI.RawUI.BackgroundColor = "DarkGreen"
+    $Host.UI.RawUI.ForegroundColor = "White"
+    Clear-Host
+    
+    Write-Host ""
+    Write-Host ""
+    Write-Host "  :)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  A new update is available and ready to install!" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  MTCP - MULTI-TOOL CONTROL PANEL UPDATE" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Current Version: $CurrentVersion" -ForegroundColor White
+    Write-Host "  New Version:     $NewVersion" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "  The update will:" -ForegroundColor White
+    Write-Host "    - Backup your current installation" -ForegroundColor Gray
+    Write-Host "    - Download and install the new version" -ForegroundColor Gray
+    Write-Host "    - Restart the application automatically" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  " -NoNewline
+    Write-Host "[U]" -ForegroundColor Black -BackgroundColor White -NoNewline
+    Write-Host " Press U to Update  " -ForegroundColor White -NoNewline
+    Write-Host "[ESC]" -ForegroundColor Black -BackgroundColor White -NoNewline
+    Write-Host " Press ESC to Skip" -ForegroundColor White
+    Write-Host ""
+    
+    # Wait for U or ESC key
+    while ($true) {
+        $key = [Console]::ReadKey($true)
+        if ($key.Key -eq "Escape") {
+            # Reset colors
+            $Host.UI.RawUI.BackgroundColor = "Black"
+            $Host.UI.RawUI.ForegroundColor = "White"
+            Clear-Host
+            return $false
+        } elseif ($key.KeyChar.ToString().ToUpper() -eq "U") {
+            # Reset colors
+            $Host.UI.RawUI.BackgroundColor = "Black"
+            $Host.UI.RawUI.ForegroundColor = "White"
+            Clear-Host
+            return $true
+        }
+    }
+}
+
 function Get-SysInfo {
     $comp = Get-CimInstance Win32_ComputerSystem
     $os = Get-CimInstance Win32_OperatingSystem
@@ -476,24 +529,12 @@ while ($running) {
                 Remove-Job -Job $updateJob
                 
                 if ($updateInfo -and $updateInfo.UpdateAvailable) {
-                    # Show update notification
-                    $originalPos = [Console]::CursorTop
-                    [Console]::SetCursorPosition(0, $menuStartLine)
+                    # Show full-screen update notification
+                    $shouldUpdate = Show-UpdateNotification -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion -DownloadUrl $updateInfo.DownloadUrl
                     
-                    Write-Host ""
-                    Write-Host " " -NoNewline
-                    Write-Host " UPDATE AVAILABLE " -ForegroundColor Black -BackgroundColor Yellow -NoNewline
-                    Write-Host " v$($updateInfo.RemoteVersion) is ready to install!" -ForegroundColor Yellow
-                    Write-Host ""
-                    Write-Host "   Press " -NoNewline -ForegroundColor Gray
-                    Write-Host "[U]" -NoNewline -ForegroundColor Cyan
-                    Write-Host " to update now or any other key to continue..." -ForegroundColor Gray
-                    
-                    $key = [Console]::ReadKey($true)
-                    if ($key.KeyChar.ToString().ToUpper() -eq "U") {
+                    if ($shouldUpdate) {
                         $installScript = Join-Path $ScriptRoot "sfu-tools\Install-Update.ps1"
                         if (Test-Path $installScript) {
-                            Clear-Host
                             & $installScript -DownloadUrl $updateInfo.DownloadUrl -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion
                         }
                     }

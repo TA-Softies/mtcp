@@ -94,8 +94,13 @@ try {
     $launchScript = Join-Path $ScriptRoot "Launch.ps1"
     Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$launchScript`"" -Verb RunAs
     
-    # Exit current instance
-    Exit
+    # Close all parent PowerShell processes running Launch.ps1
+    Get-Process -Name "powershell*" -ErrorAction SilentlyContinue | Where-Object {
+        $_.MainWindowTitle -like "*TECHNICAL ASSISTANTS*"
+    } | Stop-Process -Force -ErrorAction SilentlyContinue
+    
+    # Exit current installer process
+    [Environment]::Exit(0)
     
 } catch {
     Write-Host ""
