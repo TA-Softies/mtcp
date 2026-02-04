@@ -143,17 +143,17 @@ function Show-LoadingScreen {
     Clear-Host
     
     Write-Host ""
+    Write-Host "  ========================================================================" -ForegroundColor Cyan
     Write-Host ""
+    $line1 = "  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580
+    $line2 = "  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588
+    [Console]::WriteLine($line1)
+    [Console]::WriteLine($line2)
     Write-Host ""
+    Write-Host "                  MULTI-TOOL CONTROL PANEL v$Version" -ForegroundColor Gray
     Write-Host ""
+    Write-Host "  ========================================================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host ""
-    Write-Host ""
-    Write-Host ""
-    Write-Host "                  TECHNICAL ASSISTANTS" -ForegroundColor Cyan
-    Write-Host "                  MULTI-TOOL CONTROL PANEL" -ForegroundColor White
-    Write-Host ""
-    Write-Host "                  Version $Version" -ForegroundColor Gray
     Write-Host ""
     Write-Host ""
     Write-Host "                  Checking for updates" -ForegroundColor Yellow -NoNewline
@@ -339,10 +339,10 @@ function Draw-Menu {
         
         # Add prefix and colors based on item type
         if ($MenuItems[$i].Type -eq "category") {
-            $itemPrefix = "[CAT] "
+            $itemPrefix = "[+] "
             $color = "DarkGreen"
         } elseif ($MenuItems[$i].Type -eq "subcategory") {
-            $itemPrefix = "[SUB] "
+            $itemPrefix = "[-] "
             $color = "Green"
         }
         
