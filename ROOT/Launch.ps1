@@ -133,6 +133,40 @@ function Show-UpdateNotification {
     }
 }
 
+function Show-LoadingScreen {
+    param(
+        [string]$Version
+    )
+    
+    $Host.UI.RawUI.BackgroundColor = "Black"
+    $Host.UI.RawUI.ForegroundColor = "White"
+    Clear-Host
+    
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+    Write-Host ""
+    Write-Host "                  TECHNICAL ASSISTANTS" -ForegroundColor Cyan
+    Write-Host "                  MULTI-TOOL CONTROL PANEL" -ForegroundColor White
+    Write-Host ""
+    Write-Host "                  Version $Version" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host ""
+    Write-Host "                  Checking for updates" -ForegroundColor Yellow -NoNewline
+    
+    # Animated dots
+    for ($i = 0; $i -lt 3; $i++) {
+        Start-Sleep -Milliseconds 300
+        Write-Host "." -NoNewline -ForegroundColor Yellow
+    }
+    
+    Write-Host ""
+}
+
 function Get-SysInfo {
     $comp = Get-CimInstance Win32_ComputerSystem
     $os = Get-CimInstance Win32_OperatingSystem
@@ -459,13 +493,51 @@ try {
     Show-BSOD -ErrorTitle "CONFIG_FILE_CORRUPTED" -ErrorMessage $errorMsg -ErrorCode "0xC0000004"
 }
 
-# Check for updates in background
+# Check for updates with loading screen
+Show-LoadingScreen -Version $Version
+
 $updateCheckScript = Join-Path $ScriptRoot "sfu-tools\Check-Update.ps1"
+$updateInfo = $null
+
 if (Test-Path $updateCheckScript) {
     $updateJob = Start-Job -ScriptBlock {
         param($ScriptPath, $CurrentVersion)
         & $ScriptPath -CurrentVersion $CurrentVersion -Silent
     } -ArgumentList $updateCheckScript, $Version
+    
+    # Wait up to 5 seconds for update check to complete
+    $timeout = 50 # 50 x 100ms = 5 seconds
+    $count = 0
+    while ($count -lt $timeout -and $updateJob.State -eq "Running") {
+        Start-Sleep -Milliseconds 100
+        $count++
+    }
+    
+    # Check if job completed
+    if ($updateJob.State -eq "Completed") {
+        $updateInfo = Receive-Job -Job $updateJob
+        Remove-Job -Job $updateJob
+        
+        # If update available, show notification
+        if ($updateInfo -and $updateInfo.UpdateAvailable) {
+            $shouldUpdate = Show-UpdateNotification -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion -DownloadUrl $updateInfo.DownloadUrl
+            
+            if ($shouldUpdate) {
+                $installScript = Join-Path $ScriptRoot "sfu-tools\Install-Update.ps1"
+                if (Test-Path $installScript) {
+                    & $installScript -DownloadUrl $updateInfo.DownloadUrl -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion
+                    Exit
+                }
+            }
+        }
+    } elseif ($updateJob.State -eq "Running") {
+        # Timeout - stop the job
+        Stop-Job -Job $updateJob
+        Remove-Job -Job $updateJob -Force
+    } else {
+        # Job failed
+        Remove-Job -Job $updateJob -Force
+    }
 }
 
 # 2. Navigation State
@@ -477,7 +549,6 @@ $selection = 0
 $running = $true
 $needsFullRedraw = $true
 $menuStartLine = 0
-$updateChecked = $false
 
 while ($running) {
     # Determine what to display
@@ -521,32 +592,6 @@ while ($running) {
         Draw-Menu -MenuItems $menuItems -Selection $selection
         Draw-Footer -Version $Version -Author $Author
         $needsFullRedraw = $false
-        
-        # Check for update notification after first draw
-        if (-not $updateChecked -and $updateJob) {
-            if ($updateJob.State -eq "Completed") {
-                $updateInfo = Receive-Job -Job $updateJob
-                Remove-Job -Job $updateJob
-                
-                if ($updateInfo -and $updateInfo.UpdateAvailable) {
-                    # Show full-screen update notification
-                    $shouldUpdate = Show-UpdateNotification -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion -DownloadUrl $updateInfo.DownloadUrl
-                    
-                    if ($shouldUpdate) {
-                        $installScript = Join-Path $ScriptRoot "sfu-tools\Install-Update.ps1"
-                        if (Test-Path $installScript) {
-                            & $installScript -DownloadUrl $updateInfo.DownloadUrl -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion
-                        }
-                    }
-                    
-                    $needsFullRedraw = $true
-                }
-                $updateChecked = $true
-            } elseif ($updateJob.State -eq "Failed") {
-                Remove-Job -Job $updateJob -Force
-                $updateChecked = $true
-            }
-        }
     } else {
         # Quick redraw - only update menu section
         [Console]::SetCursorPosition(0, $menuStartLine)
