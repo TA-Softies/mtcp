@@ -143,16 +143,12 @@ function Show-LoadingScreen {
     Clear-Host
     
     Write-Host ""
-    Write-Host "  ========================================================================" -ForegroundColor Cyan
-    Write-Host ""
     $line1 = "  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580
     $line2 = "  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588
     [Console]::WriteLine($line1)
     [Console]::WriteLine($line2)
     Write-Host ""
     Write-Host "                  MULTI-TOOL CONTROL PANEL v$Version" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "  ========================================================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host ""
     Write-Host ""
@@ -285,24 +281,23 @@ function Draw-Header {
     Write-Host "HOST: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Name)" -ForegroundColor White
     
     Write-Host " [MDL] " -NoNewline -ForegroundColor Yellow
-    Write-Host "MODEL: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Model)" -ForegroundColor White
+    Write-Host " " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Model)" -ForegroundColor White
     
     Write-Host " [WIN] " -NoNewline -ForegroundColor Yellow
-    Write-Host "NAME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.OS)" -ForegroundColor White
+    Write-Host " " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.OS)" -ForegroundColor White
     
     Write-Host " [UPT] " -NoNewline -ForegroundColor Yellow
-    Write-Host "TIME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.BootTime)" -NoNewline -ForegroundColor White
+    Write-Host " " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Uptime)" -NoNewline -ForegroundColor White
     Write-Host "  |  " -NoNewline -ForegroundColor DarkGray
-    Write-Host "UPTIME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Uptime)" -ForegroundColor White
+    Write-Host "TIME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.BootTime)" -ForegroundColor White
     
     Write-Host " [NET] " -NoNewline -ForegroundColor Yellow
-    Write-Host "MODE: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Net)" -NoNewline -ForegroundColor White
+    if ($Info.NetStatus -eq "Connected") { Write-Host "ONLINE" -NoNewline -ForegroundColor Green } else { Write-Host "OFFLINE" -NoNewline -ForegroundColor Red }
     Write-Host "  |  " -NoNewline -ForegroundColor DarkGray
-    Write-Host "STATUS: " -NoNewline -ForegroundColor DarkGray
-    if ($Info.NetStatus -eq "Connected") { Write-Host "ONLINE " -NoNewline -ForegroundColor Green } else { Write-Host "OFFLINE " -NoNewline -ForegroundColor Red }
+    Write-Host "MODE: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Net)" -ForegroundColor White
     
     # Row 2: Hardware
-    Write-Host "`n [H/W] " -NoNewline -ForegroundColor Yellow
+    Write-Host " [H/W] " -NoNewline -ForegroundColor Yellow
     Write-Host "MOBO: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Mobo)" -NoNewline -ForegroundColor White
     Write-Host "  |  " -NoNewline -ForegroundColor DarkGray
     Write-Host "RAM: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.RAM)" -ForegroundColor White
@@ -340,18 +335,18 @@ function Draw-Menu {
         # Add prefix and colors based on item type
         if ($MenuItems[$i].Type -eq "category") {
             $itemPrefix = "[+] "
-            $color = "DarkGreen"
+            $color = "Gray"
         } elseif ($MenuItems[$i].Type -eq "subcategory") {
             $itemPrefix = "[-] "
-            $color = "Green"
+            $color = "DarkGray"
         }
         
         if ($i -eq $Selection) {
             $prefix = " > "
             if ($MenuItems[$i].Type -eq "category") {
-                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor DarkGreen
+                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor White
             } elseif ($MenuItems[$i].Type -eq "subcategory") {
-                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Green
+                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Gray
             } else {
                 Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Cyan
             }
