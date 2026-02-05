@@ -84,6 +84,11 @@
                     "description": "Change the desktop wallpaper",
                     "command": "powershell.exe -ExecutionPolicy Bypass -File \"$PSScriptRoot\\sfu-tools\\Set-Wallpaper.ps1\"",
                     "hotkey": "W"
+                },
+                {
+                    "name": "Remove Inactive User Profiles",
+                    "description": "Delete domain user profiles (tp*) excluding student and localadmin",
+                    "command": "powershell.exe -ExecutionPolicy Bypass -File \"$PSScriptRoot\\sfu-tools\\Invoke-DelProf2.ps1\""
                 }
             ]
         },

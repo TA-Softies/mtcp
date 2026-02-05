@@ -80,6 +80,93 @@ function Show-BSOD {
     Exit
 }
 
+function Show-AlertScreen {
+    param(
+        [string]$Title,
+        [string]$Message,
+        [string[]]$Options = @(),
+        [string]$PromptText = "Select an option",
+        [string]$Icon = "(!)"
+    )
+    
+    $Host.UI.RawUI.BackgroundColor = "DarkYellow"
+    $Host.UI.RawUI.ForegroundColor = "Black"
+    Clear-Host
+    
+    # Calculate vertical centering
+    $windowHeight = 35
+    $contentLines = 10 + $Options.Count + ($Message -split "`n").Count
+    $topPadding = [Math]::Max(2, [Math]::Floor(($windowHeight - $contentLines) / 2))
+    
+    # Add top padding
+    Write-Host ("`n" * $topPadding)
+    
+    # Icon and Title
+    Write-Host "  $Icon" -ForegroundColor Black
+    Write-Host ""
+    Write-Host "  $Title" -ForegroundColor Black
+    Write-Host ""
+    
+    # Message (support multi-line)
+    $messageLines = $Message -split "`n"
+    foreach ($line in $messageLines) {
+        Write-Host "  $line" -ForegroundColor Black
+    }
+    Write-Host ""
+    
+    # Options
+    if ($Options.Count -gt 0) {
+        Write-Host "  $PromptText" -ForegroundColor Black
+        Write-Host ""
+        
+        for ($i = 0; $i -lt $Options.Count; $i++) {
+            $optionKey = $Options[$i].Substring(0, 1).ToUpper()
+            $optionText = $Options[$i]
+            
+            Write-Host "  " -NoNewline
+            Write-Host "[$optionKey]" -ForegroundColor White -BackgroundColor Black -NoNewline
+            Write-Host " $optionText" -ForegroundColor Black
+        }
+        Write-Host ""
+        
+        # Wait for valid key input
+        while ($true) {
+            $key = [Console]::ReadKey($true)
+            $keyChar = $key.KeyChar.ToString().ToUpper()
+            
+            # Check if pressed key matches any option
+            foreach ($option in $Options) {
+                if ($keyChar -eq $option.Substring(0, 1).ToUpper()) {
+                    # Reset colors
+                    $Host.UI.RawUI.BackgroundColor = "Black"
+                    $Host.UI.RawUI.ForegroundColor = "White"
+                    Clear-Host
+                    return $option
+                }
+            }
+            
+            # Also check for ESC key
+            if ($key.Key -eq "Escape") {
+                # Reset colors
+                $Host.UI.RawUI.BackgroundColor = "Black"
+                $Host.UI.RawUI.ForegroundColor = "White"
+                Clear-Host
+                return "Escape"
+            }
+        }
+    } else {
+        # No options, just show message and wait for any key
+        Write-Host "  Press any key to continue..." -ForegroundColor Black
+        $null = [Console]::ReadKey($true)
+        
+        # Reset colors
+        $Host.UI.RawUI.BackgroundColor = "Black"
+        $Host.UI.RawUI.ForegroundColor = "White"
+        Clear-Host
+        return $null
+    }
+}
+
 function Show-UpdateNotification {
     param(
         [string]$CurrentVersion,
