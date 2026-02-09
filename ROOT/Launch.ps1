@@ -1,4 +1,4 @@
-<#
+﻿<#
     .SYNOPSIS
     Technical Assistants Multi-Tool Launcher
 #>
@@ -21,17 +21,26 @@ $Host.UI.RawUI.WindowTitle = "TECHNICAL ASSISTANTS - Multi-Tool Panel"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
 
-# Set window size to match banner (76 chars wide, 35 lines tall)
+# Set window size wider to fit content, no scrolling
 try {
-    $windowSize = New-Object System.Management.Automation.Host.Size(76, 35)
-    $bufferSize = New-Object System.Management.Automation.Host.Size(76, 9999)
-    $Host.UI.RawUI.WindowSize = $windowSize
-    $Host.UI.RawUI.BufferSize = $bufferSize
+    $w = 77; $h = 46
+    # Must shrink window before buffer if current window is larger than target
+    $curWin = $Host.UI.RawUI.WindowSize
+    $curBuf = $Host.UI.RawUI.BufferSize
+    # Step 1: Shrink window to fit within both current buffer and target
+    $tmpW = [Math]::Min($w, $curBuf.Width)
+    $tmpH = [Math]::Min($h, $curBuf.Height)
+    $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size($tmpW, $tmpH)
+    # Step 2: Set buffer (width matches window, height large to prevent overflow)
+    $Host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size($w, 9999)
+    # Step 3: Set window to target
+    $Host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size($w, $h)
 } catch {
     # Ignore if window size cannot be set (e.g., in ISE or unsupported terminal)
 }
 
 Clear-Host
+[Console]::CursorVisible = $false
 
 # --- Configuration ---
 $ScriptRoot = $PSScriptRoot
@@ -42,6 +51,57 @@ $AppTitle   = "TECHNICAL ASSISTANTS"
 $DebugMode  = $false
 
 # --- Helper Functions ---
+
+# Scroll tick for marquee animation
+$script:ScrollTick = 0
+$script:HasScrollText = $false
+
+# Writes text that scrolls if too long for available space
+function Write-ScrollText {
+    param(
+        [string]$Text,
+        [int]$TargetCol = 74,
+        [string]$Color = "White"
+    )
+    $curPos = [Console]::CursorLeft
+    $available = $TargetCol - $curPos - 1
+    if ($available -lt 5) { $available = 5 }
+    if ($Text.Length -le $available) {
+        Write-Host $Text -NoNewline -ForegroundColor $Color
+    } else {
+        $script:HasScrollText = $true
+        $pauseTicks = 6
+        $scrollRange = $Text.Length - $available
+        $cycleLen = $pauseTicks + $scrollRange + $pauseTicks + $scrollRange
+        $pos = $script:ScrollTick % $cycleLen
+        if ($pos -lt $pauseTicks) {
+            $offset = 0
+        } elseif ($pos -lt ($pauseTicks + $scrollRange)) {
+            $offset = $pos - $pauseTicks
+        } elseif ($pos -lt ($pauseTicks + $scrollRange + $pauseTicks)) {
+            $offset = $scrollRange
+        } else {
+            $offset = $scrollRange - ($pos - $pauseTicks - $scrollRange - $pauseTicks)
+        }
+        $visible = $Text.Substring($offset, $available)
+        Write-Host $visible -NoNewline -ForegroundColor $Color
+    }
+}
+
+# Pads with spaces to column 74 then writes closing border char
+# This handles emoji display widths automatically via CursorLeft
+function Write-BorderEnd {
+    param(
+        [string]$Char = ([string][char]0x2502),
+        [string]$Color = "DarkCyan"
+    )
+    $targetCol = 74  # 2 prefix + 1 border + 71 inner = col 74
+    $cur = [Console]::CursorLeft
+    $n = $targetCol - $cur
+    if ($n -lt 1) { $n = 1 }
+    Write-Host (" " * $n) -NoNewline
+    Write-Host $Char -ForegroundColor $Color
+}
 
 function Show-BSOD {
     param(
@@ -96,7 +156,7 @@ function Show-AlertScreen {
     Clear-Host
     
     # Calculate vertical centering
-    $windowHeight = 35
+    $windowHeight = 43
     $contentLines = 10 + $Options.Count + ($Message -split "`n").Count
     $topPadding = [Math]::Max(2, [Math]::Floor(($windowHeight - $contentLines) / 2))
     
@@ -232,26 +292,39 @@ function Show-LoadingScreen {
     Clear-Host
     
     Write-Host ""
-    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                                                                       " -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    $line1 = "  ║  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + "  ║"
-    $line2 = "  ║  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588 + "  ║"
-    [Console]::WriteLine($line1)
-    [Console]::WriteLine($line2)
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                                                                       " -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "              MULTI-TOOL CONTROL PANEL v$Version" -NoNewline -ForegroundColor Gray
-    $spaces = 73 - 38 - $Version.Length
+    Write-Host ("  " + [char]0x2554 + ([string]([char]0x2550) * 71) + [char]0x2557) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 71) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    $a1 = "                      " + [char]0x2588 + [char]0x2584 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + "   " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588
+    Write-Host $a1 -NoNewline -ForegroundColor Cyan
+    $pad1 = 71 - $a1.Length; if ($pad1 -lt 0) { $pad1 = 1 }
+    Write-Host (" " * $pad1) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    $a2 = "                      " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + " " + "   " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588
+    Write-Host $a2 -NoNewline -ForegroundColor Cyan
+    $pad2 = 71 - $a2.Length; if ($pad2 -lt 0) { $pad2 = 1 }
+    Write-Host (" " * $pad2) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 71) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    $mtcpText = "            MULTI-TOOL CONTROL PANEL v$Version"
+    Write-Host $mtcpText -NoNewline -ForegroundColor Gray
+    $spaces = 71 - $mtcpText.Length; if ($spaces -lt 0) { $spaces = 1 }
     Write-Host (" " * $spaces) -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                                                                       " -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host "                         Technical Assistants" -NoNewline -ForegroundColor DarkCyan
+    Write-Host (" " * 26) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 71) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x255A + ([string]([char]0x2550) * 71) + [char]0x255D) -ForegroundColor Cyan
     Write-Host ""
     Write-Host "                    🔄 Checking for updates" -ForegroundColor Yellow -NoNewline
     
@@ -308,15 +381,15 @@ function Show-HelpScreen {
     
     Clear-Host
     Write-Host ""
-    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                          ❓ HELP MENU                            " -NoNewline -ForegroundColor Yellow
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2554 + ([string]([char]0x2550) * 71) + [char]0x2557) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host "                                  ❓ HELP MENU" -NoNewline -ForegroundColor Yellow
+    Write-BorderEnd -Char ([string][char]0x2551) -Color "Cyan"
+    Write-Host ("  " + [char]0x255A + ([string]([char]0x2550) * 71) + [char]0x255D) -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  💬 Available Commands:" -ForegroundColor Yellow
     Write-Host "  " -NoNewline
-    Write-Host ("─" * 73) -ForegroundColor DarkGray
+    Write-Host (([char]0x2500).ToString() * 71) -ForegroundColor DarkGray
     Write-Host ""
     
     foreach ($cmdName in ($Commands.Keys | Sort-Object)) {
@@ -331,10 +404,10 @@ function Show-HelpScreen {
     Write-Host ""
     Write-Host "  🎮 Navigation:" -ForegroundColor Yellow
     Write-Host "    • Press " -NoNewline -ForegroundColor Gray
-    Write-Host "." -NoNewline -ForegroundColor Cyan
+    Write-Host "/" -NoNewline -ForegroundColor Cyan
     Write-Host " to open command prompt" -ForegroundColor Gray
     Write-Host "    • Use " -NoNewline -ForegroundColor Gray
-    Write-Host "▲/▼" -NoNewline -ForegroundColor Cyan
+    Write-Host ([string]([char]0x25B2) + "/" + [string]([char]0x25BC)) -NoNewline -ForegroundColor Cyan
     Write-Host " arrows to navigate menu" -ForegroundColor Gray
     Write-Host "    • Press " -NoNewline -ForegroundColor Gray
     Write-Host "ENTER" -NoNewline -ForegroundColor Cyan
@@ -354,15 +427,15 @@ function Show-CreditsScreen {
     
     Clear-Host
     Write-Host ""
-    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                        ⭐ CREDITS                               " -NoNewline -ForegroundColor Yellow
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2554 + ([string]([char]0x2550) * 71) + [char]0x2557) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host "                                 ⭐ CREDITS" -NoNewline -ForegroundColor Yellow
+    Write-BorderEnd -Char ([string][char]0x2551) -Color "Cyan"
+    Write-Host ("  " + [char]0x255A + ([string]([char]0x2550) * 71) + [char]0x255D) -ForegroundColor Cyan
     Write-Host ""
     Write-Host ""
-    $line1 = "      " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580
-    $line2 = "      " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591
+    $line1 = "                      " + [char]0x2588 + [char]0x2584 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + "   " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588
+    $line2 = "                      " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + " " + "   " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588
     [Console]::WriteLine($line1)
     [Console]::WriteLine($line2)
     Write-Host ""
@@ -480,7 +553,8 @@ function Invoke-SlashCommand {
                 & $scriptPath
                 Write-Host ""
                 Write-Host "Done." -ForegroundColor Green
-                Read-Host "`nPress Enter to continue"
+                Write-Host ""
+                Read-Host "Press Enter to continue"
             } else {
                 Write-Host "  ❌ Script not found: $scriptPath" -ForegroundColor Red
                 Start-Sleep -Seconds 2
@@ -494,7 +568,8 @@ function Invoke-SlashCommand {
             Invoke-Expression $cmd.command
             Write-Host ""
             Write-Host "Done." -ForegroundColor Green
-            Read-Host "`nPress Enter to continue"
+            Write-Host ""
+            Read-Host "Press Enter to continue"
             return $true
         }
         "exit" {
@@ -603,70 +678,72 @@ function Get-SysInfo {
 }
 
 function Draw-Header {
-    param($Info, $Version, $Breadcrumb = "Main Menu", $Subtitle = "")
-    Clear-Host
+    param($Info, $Version, $Breadcrumb = "Main Menu", $Subtitle = "", [switch]$NoClear)
+    $script:HasScrollText = $false
+    if ($NoClear) { [Console]::SetCursorPosition(0, 0) } else { Clear-Host }
     
     # Modern ASCII Banner with box drawing
     Write-Host ""
-    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                                                                       " -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    $line1 = "  ║  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + "  ║"
-    $line2 = "  ║  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588 + "  ║"
-    [Console]::WriteLine($line1)
-    [Console]::WriteLine($line2)
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                                                                       " -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "              MULTI-TOOL CONTROL PANEL v$Version" -NoNewline -ForegroundColor Gray
-    $spaces = 73 - 38 - $Version.Length
+    Write-Host ("  " + [char]0x2554 + ([string]([char]0x2550) * 71) + [char]0x2557) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 71) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    $a1 = "                      " + [char]0x2588 + [char]0x2584 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + "   " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588
+    Write-Host $a1 -NoNewline -ForegroundColor Cyan
+    $hp1 = 71 - $a1.Length; if ($hp1 -lt 0) { $hp1 = 1 }
+    Write-Host (" " * $hp1) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    $a2 = "                      " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + " " + "   " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588
+    Write-Host $a2 -NoNewline -ForegroundColor Cyan
+    $hp2 = 71 - $a2.Length; if ($hp2 -lt 0) { $hp2 = 1 }
+    Write-Host (" " * $hp2) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 71) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    $mtcpText = "                  MULTI-TOOL CONTROL PANEL v$Version"
+    Write-Host $mtcpText -NoNewline -ForegroundColor Gray
+    $spaces = 71 - $mtcpText.Length; if ($spaces -lt 0) { $spaces = 1 }
     Write-Host (" " * $spaces) -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
-    Write-Host "                                                                       " -NoNewline
-    Write-Host "║" -ForegroundColor Cyan
-    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host "                         Technical Assistants" -NoNewline -ForegroundColor DarkCyan
+    Write-Host (" " * 26) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * 71) -NoNewline
+    Write-Host ([char]0x2551) -ForegroundColor Cyan
+    Write-Host ("  " + [char]0x255A + ([string]([char]0x2550) * 71) + [char]0x255D) -ForegroundColor Cyan
     Write-Host ""
 
     # Modern Info Grid with Icons
-    Write-Host "  ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkCyan
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x250C + ([string]([char]0x2500) * 71) + [char]0x2510) -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     Write-Host "💻 " -NoNewline -ForegroundColor Yellow
-    Write-Host "HOST: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Name)" -NoNewline -ForegroundColor White
-    $padding = 69 - 10 - $Info.Name.Length
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
+    Write-Host "HOST: " -NoNewline -ForegroundColor DarkGray; Write-ScrollText -Text "$($Info.Name)" -Color "White"
+    Write-BorderEnd -Color "DarkCyan"
     
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     Write-Host "🖥️  " -NoNewline -ForegroundColor Yellow
-    Write-Host "MODEL: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Model)" -NoNewline -ForegroundColor White
-    $padding = 67 - 13 - $Info.Model.Length
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
+    Write-Host "MODEL: " -NoNewline -ForegroundColor DarkGray; Write-ScrollText -Text "$($Info.Model)" -Color "White"
+    Write-BorderEnd -Color "DarkCyan"
     
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     Write-Host "🪟 " -NoNewline -ForegroundColor Yellow
-    Write-Host "OS: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.OS)" -NoNewline -ForegroundColor White
-    $padding = 71 - 8 - $Info.OS.Length
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
+    Write-Host "OS: " -NoNewline -ForegroundColor DarkGray; Write-ScrollText -Text "$($Info.OS)" -Color "White"
+    Write-BorderEnd -Color "DarkCyan"
     
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     Write-Host "⏱️  " -NoNewline -ForegroundColor Yellow
     Write-Host "UPTIME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Uptime)" -NoNewline -ForegroundColor White
-    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host " " -NoNewline; Write-Host ([char]0x2502) -NoNewline -ForegroundColor DarkGray; Write-Host " " -NoNewline
     Write-Host "BOOT: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.BootTime)" -NoNewline -ForegroundColor White
-    $totalLen = 12 + $Info.Uptime.Length + 10 + $Info.BootTime.Length
-    $padding = 70 - $totalLen
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
+    Write-BorderEnd -Color "DarkCyan"
     
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     if ($Info.NetStatus -eq "Connected") { 
         Write-Host "🌐 " -NoNewline -ForegroundColor Green
         Write-Host "NETWORK: " -NoNewline -ForegroundColor DarkGray
@@ -676,27 +753,19 @@ function Draw-Header {
         Write-Host "NETWORK: " -NoNewline -ForegroundColor DarkGray
         Write-Host "OFFLINE" -NoNewline -ForegroundColor Red
     }
-    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host " " -NoNewline; Write-Host ([char]0x2502) -NoNewline -ForegroundColor DarkGray; Write-Host " " -NoNewline
     Write-Host "$($Info.Net)" -NoNewline -ForegroundColor White
-    $netLen = 13 + ($Info.NetStatus -eq "Connected" ? 6 : 7) + $Info.Net.Length
-    $padding = 70 - $netLen
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
+    Write-BorderEnd -Color "DarkCyan"
     
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     Write-Host "🔩 " -NoNewline -ForegroundColor Yellow
     Write-Host "MOBO: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Mobo)" -NoNewline -ForegroundColor White
-    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host " " -NoNewline; Write-Host ([char]0x2502) -NoNewline -ForegroundColor DarkGray; Write-Host " " -NoNewline
     Write-Host "💾 " -NoNewline -ForegroundColor Yellow
     Write-Host "RAM: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.RAM)" -NoNewline -ForegroundColor White
-    $hwLen = 11 + $Info.Mobo.Length + 11 + $Info.RAM.Length
-    $padding = 70 - $hwLen
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
+    Write-BorderEnd -Color "DarkCyan"
 
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkCyan
     if ($Info.DF -eq "FROZEN") {
         Write-Host "❄️  " -NoNewline -ForegroundColor Cyan
     } elseif ($Info.DF -eq "THAWED") {
@@ -706,45 +775,37 @@ function Draw-Header {
     }
     Write-Host "DEEP FREEZE: " -NoNewline -ForegroundColor DarkGray
     Write-Host " $($Info.DF) " -ForegroundColor Black -BackgroundColor $Info.DFCol -NoNewline
-    $dfLen = 17 + $Info.DF.Length + 2
-    $padding = 70 - $dfLen
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkCyan
-    Write-Host "  └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkCyan
+    Write-BorderEnd -Color "DarkCyan"
+    Write-Host ("  " + [char]0x2514 + ([string]([char]0x2500) * 71) + [char]0x2518) -ForegroundColor DarkCyan
     
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host ("  " + [char]0x250C + ([string]([char]0x2500) * 71) + [char]0x2510) -ForegroundColor DarkGray
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkGray
     Write-Host "📍 " -NoNewline -ForegroundColor Yellow
     Write-Host "$Breadcrumb" -NoNewline -ForegroundColor White
-    $padding = 68 - $Breadcrumb.Length
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkGray
+    Write-BorderEnd -Color "DarkGray"
     if ($Subtitle) {
-        Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+        Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkGray
         Write-Host "ℹ️  " -NoNewline -ForegroundColor DarkCyan
         Write-Host "$Subtitle" -NoNewline -ForegroundColor DarkCyan
-        $padding = 68 - $Subtitle.Length
-        if ($padding -lt 0) { $padding = 1 }
-        Write-Host (" " * $padding) -NoNewline
-        Write-Host "│" -ForegroundColor DarkGray
+        Write-BorderEnd -Color "DarkGray"
     }
-    Write-Host "  └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host ("  " + [char]0x2514 + ([string]([char]0x2500) * 71) + [char]0x2518) -ForegroundColor DarkGray
     Write-Host ""
     $dfAction = if ($Info.DF -eq "FROZEN") { "Thaw" } elseif ($Info.DF -eq "THAWED") { "Freeze" } else { "DF" }
     Write-Host "  ⌨️  " -NoNewline -ForegroundColor Yellow
-    Write-Host "[ENTER]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host "`[ENTER`]" -NoNewline -ForegroundColor Black -BackgroundColor White
     Write-Host " Run  " -NoNewline -ForegroundColor Yellow
-    Write-Host "[W]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host "`[◄►`]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host " Nav  " -NoNewline -ForegroundColor Yellow
+    Write-Host "`[W`]" -NoNewline -ForegroundColor Black -BackgroundColor White
     Write-Host " Wallpaper  " -NoNewline -ForegroundColor Yellow
-    Write-Host "[D]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host "`[D`]" -NoNewline -ForegroundColor Black -BackgroundColor White
     Write-Host " $dfAction  " -NoNewline -ForegroundColor Yellow
-    Write-Host "[ESC]" -NoNewline -ForegroundColor White -BackgroundColor Red
-    Write-Host " Back/Exit" -ForegroundColor Red
+    Write-Host "`[E`]" -NoNewline -ForegroundColor White -BackgroundColor Red
+    Write-Host " Exit" -ForegroundColor Red
     Write-Host "  " -NoNewline
-    Write-Host ("─" * 73) -ForegroundColor DarkGray
+    Write-Host ([string]([char]0x2500) * 71) -ForegroundColor DarkGray
 }
 
 function Draw-Menu {
@@ -771,7 +832,7 @@ function Draw-Menu {
         }
         
         if ($i -eq $Selection) {
-            $prefix = "  ▶ "
+            $prefix = "  $([char]0x25B6) "
             if ($MenuItems[$i].Type -eq "category") {
                 Write-Host "$prefix$icon$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor White
             } elseif ($MenuItems[$i].Type -eq "subcategory") {
@@ -788,8 +849,8 @@ function Draw-Menu {
 function Draw-Footer {
     param($Version, $Author)
     
-    # Calculate cursor position for bottom of window (line 35)
-    $windowHeight = 35
+    # Calculate cursor position for bottom of window
+    $windowHeight = 43
     $currentPos = [Console]::CursorTop
     $linesToBottom = $windowHeight - $currentPos - 2
     
@@ -797,28 +858,31 @@ function Draw-Footer {
         Write-Host ("`n" * $linesToBottom)
     }
     
-    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor DarkGray
-    Write-Host "  ║ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "  $([char]0x2554)$([string]([char]0x2550) * 71)$([char]0x2557)" -ForegroundColor DarkGray
+    Write-Host "  $([char]0x2551) " -NoNewline -ForegroundColor DarkGray
     
     # Navigation hints
-    Write-Host "▲" -NoNewline -ForegroundColor Yellow
+    Write-Host "$([char]0x25B2)" -NoNewline -ForegroundColor Yellow
     Write-Host "/" -NoNewline -ForegroundColor DarkGray
-    Write-Host "▼" -NoNewline -ForegroundColor Yellow
+    Write-Host "$([char]0x25BC)" -NoNewline -ForegroundColor Yellow
     Write-Host " Nav  " -NoNewline -ForegroundColor White
-    Write-Host "[ESC]" -NoNewline -ForegroundColor White -BackgroundColor Red
+    Write-Host "`[ESC`]" -NoNewline -ForegroundColor White -BackgroundColor Red
     Write-Host " Exit  " -NoNewline -ForegroundColor White
-    Write-Host "[.]" -NoNewline -ForegroundColor Black -BackgroundColor Cyan
+    Write-Host "`[/`]" -NoNewline -ForegroundColor Black -BackgroundColor Cyan
     Write-Host " Command" -NoNewline -ForegroundColor White
     
     # Right-align version and author
-    $rightText = "v$Version │ $Author"
-    $spacesNeeded = 68 - 31 - $rightText.Length
+    $rightText = "v$Version $([char]0x2502) $Author"
+    $targetCol = 74
+    $cur = [Console]::CursorLeft
+    $rightLen = $rightText.Length + 1  # +1 for trailing space before border
+    $spacesNeeded = $targetCol - $cur - $rightLen
     if ($spacesNeeded -gt 0) {
         Write-Host (" " * $spacesNeeded) -NoNewline
     }
     Write-Host $rightText -NoNewline -ForegroundColor DarkGray
-    Write-Host " ║" -ForegroundColor DarkGray
-    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor DarkGray
+    Write-Host " $([char]0x2551)" -ForegroundColor DarkGray
+    Write-Host "  $([char]0x255A)$([string]([char]0x2550) * 71)$([char]0x255D)" -ForegroundColor DarkGray
 }
 
 function Manage-DeepFreeze {
@@ -865,28 +929,23 @@ function Show-DebugMenu {
     
     Clear-Host
     Write-Host ""
-    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-    Write-Host "  ║" -NoNewline -ForegroundColor Yellow
-    Write-Host "                          🐛 DEBUG MENU                            " -NoNewline -ForegroundColor Yellow
-    Write-Host "║" -ForegroundColor Yellow
-    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+    Write-Host ("  " + [char]0x2554 + ([string]([char]0x2550) * 71) + [char]0x2557) -ForegroundColor Yellow
+    Write-Host ("  " + [char]0x2551) -NoNewline -ForegroundColor Yellow
+    Write-Host "                               🐛 DEBUG MENU" -NoNewline -ForegroundColor Yellow
+    Write-BorderEnd -Char ([string][char]0x2551) -Color "Yellow"
+    Write-Host ("  " + [char]0x255A + ([string]([char]0x2550) * 71) + [char]0x255D) -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host ("  " + [char]0x250C + ([string]([char]0x2500) * 71) + [char]0x2510) -ForegroundColor DarkGray
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkGray
     Write-Host "📊 Version: " -NoNewline -ForegroundColor White
     Write-Host "v$Version" -NoNewline -ForegroundColor Cyan
-    $padding = 68 - 13 - $Version.Length
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkGray
-    Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+    Write-BorderEnd -Color "DarkGray"
+    Write-Host ("  " + [char]0x2502 + " ") -NoNewline -ForegroundColor DarkGray
     Write-Host "📋 Path: " -NoNewline -ForegroundColor White
     $shortPath = $ScriptRoot.Replace($env:USERPROFILE, "~")
     Write-Host "$shortPath" -NoNewline -ForegroundColor Gray
-    $padding = 68 - 10 - $shortPath.Length
-    if ($padding -lt 0) { $padding = 1 }
-    Write-Host (" " * $padding) -NoNewline
-    Write-Host "│" -ForegroundColor DarkGray
-    Write-Host "  └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-BorderEnd -Color "DarkGray"
+    Write-Host ("  " + [char]0x2514 + ([string]([char]0x2500) * 71) + [char]0x2518) -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  📊 Process Information:" -ForegroundColor Yellow
     Write-Host ""
@@ -902,6 +961,8 @@ function Show-DebugMenu {
     Write-Host "$($procInfo.StartTime)" -ForegroundColor White
     Write-Host "    🆔 Process ID:   " -NoNewline -ForegroundColor Cyan
     Write-Host "$PID" -ForegroundColor White
+    Write-Host "    📐 Window Size:  " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($Host.UI.RawUI.WindowSize.Width)x$($Host.UI.RawUI.WindowSize.Height) (Buffer: $($Host.UI.RawUI.BufferSize.Width)x$($Host.UI.RawUI.BufferSize.Height))" -ForegroundColor White
     Write-Host ""
     Write-Host "  🔧 Debug Options:" -ForegroundColor Yellow
     Write-Host ""
@@ -1014,14 +1075,14 @@ if (-not (Test-Path $ConfigPath)) {
 $script:Icons = $null
 if (Test-Path $IconsPath) {
     try {
-        $script:Icons = Get-Content $IconsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $script:Icons = Get-Content $IconsPath -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
     } catch {
         Write-Warning "Could not load icons file: $($_.Exception.Message)"
     }
 }
 
 try {
-    $json = Get-Content $ConfigPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    $json = Get-Content $ConfigPath -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
     
     # Validate required properties
     if (-not $json.categories) {
@@ -1133,6 +1194,7 @@ $selection = 0
 $running = $true
 $needsFullRedraw = $true
 $menuStartLine = 0
+$sysInfo = $null
 
 while ($running) {
     # Determine what to display
@@ -1147,16 +1209,16 @@ while ($running) {
     }
     elseif ($currentView -eq "subcategories") {
         $menuItems = $currentCategory.subcategories | ForEach-Object { [PSCustomObject]@{ Name = $_.name; Type = "subcategory"; Data = $_ } }
-        $breadcrumb = "Main Menu > $($currentCategory.name)"
+        $breadcrumb = "Main Menu ``> $($currentCategory.name)"
         $subtitle = $currentCategory.description
     }
     elseif ($currentView -eq "tools") {
         if ($currentSubcategory) {
             $menuItems = $currentSubcategory.tools | ForEach-Object { [PSCustomObject]@{ Name = $_.name; Type = "tool"; Data = $_ } }
-            $breadcrumb = "Main Menu > $($currentCategory.name) > $($currentSubcategory.name)"
+            $breadcrumb = "Main Menu > $($currentCategory.name) ``> $($currentSubcategory.name)"
         } else {
             $menuItems = $currentCategory.tools | ForEach-Object { [PSCustomObject]@{ Name = $_.name; Type = "tool"; Data = $_ } }
-            $breadcrumb = "Main Menu > $($currentCategory.name)"
+            $breadcrumb = "Main Menu ``> $($currentCategory.name)"
             $subtitle = $currentCategory.description
         }
         # Update subtitle with selected tool description
@@ -1171,27 +1233,31 @@ while ($running) {
     # Full redraw when needed (view change, initial load)
     if ($needsFullRedraw) {
         $sysInfo = Get-SysInfo
-        Draw-Header -Info $sysInfo -Version $Version -Breadcrumb $breadcrumb -Subtitle $subtitle
-        $menuStartLine = [Console]::CursorTop
-        Draw-Menu -MenuItems $menuItems -Selection $selection
-        Draw-Footer -Version $Version -Author $Author
         $needsFullRedraw = $false
-    } else {
-        # Quick redraw - only update menu section
-        [Console]::SetCursorPosition(0, $menuStartLine)
-        Draw-Menu -MenuItems $menuItems -Selection $selection
-        # Clear any remaining lines from previous menu
-        $currentLine = [Console]::CursorTop
-        $windowHeight = 35
-        $footerStart = $windowHeight - 3
-        while ($currentLine -lt $footerStart) {
-            Write-Host (" " * 76)
-            $currentLine++
+    }
+    Draw-Header -Info $sysInfo -Version $Version -Breadcrumb $breadcrumb -Subtitle $subtitle
+    $menuStartLine = [Console]::CursorTop
+    Draw-Menu -MenuItems $menuItems -Selection $selection
+    Draw-Footer -Version $Version -Author $Author
+
+    # Input Handling with scroll animation
+    $key = $null
+    $scrollTimer = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($key -eq $null) {
+        if ([Console]::KeyAvailable) {
+            $key = [Console]::ReadKey($true)
+        } else {
+            if ($script:HasScrollText -and $scrollTimer.ElapsedMilliseconds -ge 300) {
+                $script:ScrollTick++
+                $scrollTimer.Restart()
+                Draw-Header -Info $sysInfo -Version $Version -Breadcrumb $breadcrumb -Subtitle $subtitle -NoClear
+                $menuStartLine = [Console]::CursorTop
+                Draw-Menu -MenuItems $menuItems -Selection $selection
+                Draw-Footer -Version $Version -Author $Author
+            }
+            Start-Sleep -Milliseconds 50
         }
     }
-
-    # Input Handling
-    $key = [Console]::ReadKey($true)
     
     switch ($key.Key) {
         "UpArrow" {
@@ -1200,7 +1266,47 @@ while ($running) {
         }
         "DownArrow" {
             if ($selection -lt ($menuItems.Count - 1)) { $selection++ }
-            # No full redraw needed for navigation
+        }
+        "RightArrow" {
+            if ($menuItems.Count -eq 0) { continue }
+            $selected = $menuItems[$selection]
+            if ($selected.Type -eq "category") {
+                $currentCategory = $selected.Data
+                if ($currentCategory.subcategories) {
+                    $currentView = "subcategories"
+                } else {
+                    $currentView = "tools"
+                }
+                $selection = 0
+                $needsFullRedraw = $true
+            }
+            elseif ($selected.Type -eq "subcategory") {
+                $currentSubcategory = $selected.Data
+                $currentView = "tools"
+                $selection = 0
+                $needsFullRedraw = $true
+            }
+            # Do nothing for tools - must press Enter to run
+        }
+        "LeftArrow" {
+            if ($currentView -eq "subcategories") {
+                $currentView = "categories"
+                $currentCategory = $null
+                $selection = 0
+                $needsFullRedraw = $true
+            }
+            elseif ($currentView -eq "tools") {
+                if ($currentSubcategory) {
+                    $currentView = "subcategories"
+                    $currentSubcategory = $null
+                } else {
+                    $currentView = "categories"
+                    $currentCategory = $null
+                }
+                $selection = 0
+                $needsFullRedraw = $true
+            }
+            # Do nothing at categories level (no exit)
         }
         "Enter" {
             if ($menuItems.Count -eq 0) { continue }
@@ -1239,35 +1345,8 @@ while ($running) {
         }
         "Escape" {
             if ($currentView -eq "categories") {
-                # Show exit confirmation
-                Clear-Host
-                Write-Host ""
-                Write-Host ""
-                Write-Host "  ========================================================================" -ForegroundColor Cyan
-                Write-Host ""
-                Write-Host "                  Are you sure you want to exit?" -ForegroundColor Yellow
-                Write-Host ""
-                Write-Host "  ========================================================================" -ForegroundColor Cyan
-                Write-Host ""
-                Write-Host "  " -NoNewline
-                Write-Host "[Y]" -ForegroundColor Black -BackgroundColor White -NoNewline
-                Write-Host " Yes, Exit  " -ForegroundColor White -NoNewline
-                Write-Host "[N]" -ForegroundColor Black -BackgroundColor White -NoNewline
-                Write-Host " No, Go Back" -ForegroundColor White
-                Write-Host ""
-                
-                # Wait for Y or N key
-                while ($true) {
-                    $confirmKey = [Console]::ReadKey($true)
-                    $confirmChar = $confirmKey.KeyChar.ToString().ToUpper()
-                    if ($confirmChar -eq "Y") {
-                        $running = $false
-                        break
-                    } elseif ($confirmChar -eq "N" -or $confirmKey.Key -eq "Escape") {
-                        $needsFullRedraw = $true
-                        break
-                    }
-                }
+                # At top level, just ignore Escape
+                continue
             }
             elseif ($currentView -eq "subcategories") {
                 $currentView = "categories"
@@ -1290,14 +1369,42 @@ while ($running) {
         default {
             # Check for hotkeys
             $keyChar = $key.KeyChar.ToString().ToUpper()
-            
-            # Command input with . key (Minecraft style)
-            if ($key.KeyChar -eq '.') {
-                # Show command prompt at bottom
-                $windowHeight = 35
-                [Console]::SetCursorPosition(0, $windowHeight - 1)
-                Write-Host "  ❯ " -NoNewline -ForegroundColor Yellow
+            # Command input with / key (Minecraft style)
+            if ($key.KeyChar -eq '/') {
+                # Draw command popup over footer area
+                $windowHeight = 43
+                $popupRow = $windowHeight - 5
+                $boxW = 71
+                $tl = [char]0x2554; $tr = [char]0x2557; $bl = [char]0x255A; $br = [char]0x255D
+                $hz = [string]([char]0x2550); $vt = [char]0x2551
+                
+                [Console]::SetCursorPosition(0, $popupRow)
+                Write-Host ("  $tl" + ($hz * $boxW) + "$tr") -ForegroundColor Cyan
+                [Console]::SetCursorPosition(0, $popupRow + 1)
+                Write-Host "  $vt " -NoNewline -ForegroundColor Cyan
+                Write-Host "Enter command: " -NoNewline -ForegroundColor Yellow
                 Write-Host "/" -NoNewline -ForegroundColor Cyan
+                $cmdStartCol = [Console]::CursorLeft
+                $inputRowLen = 18  # length of ' Enter command: /'
+                $padR = $boxW - $inputRowLen
+                if ($padR -gt 0) { Write-Host (" " * $padR) -NoNewline }
+                Write-Host "$vt" -ForegroundColor Cyan
+                [Console]::SetCursorPosition(0, $popupRow + 2)
+                Write-Host "  $vt " -NoNewline -ForegroundColor Cyan
+                Write-Host "Type a command and press " -NoNewline -ForegroundColor DarkGray
+                Write-Host "ENTER" -NoNewline -ForegroundColor White
+                Write-Host " or " -NoNewline -ForegroundColor DarkGray
+                Write-Host "ESC" -NoNewline -ForegroundColor Red
+                Write-Host " to cancel" -NoNewline -ForegroundColor DarkGray
+                $cur2 = [Console]::CursorLeft; $pad2 = 74 - $cur2; if ($pad2 -lt 0) { $pad2 = 0 }
+                Write-Host (" " * $pad2) -NoNewline
+                Write-Host "$vt" -ForegroundColor Cyan
+                [Console]::SetCursorPosition(0, $popupRow + 3)
+                Write-Host ("  $bl" + ($hz * $boxW) + "$br") -ForegroundColor Cyan
+                
+                # Position cursor after /
+                [Console]::CursorVisible = $true
+                [Console]::SetCursorPosition($cmdStartCol, $popupRow + 1)
                 
                 # Read command input
                 $cmdInput = ""
@@ -1314,21 +1421,22 @@ while ($running) {
                             $inputRunning = $false
                         } elseif ($inputKey.Key -eq "Backspace" -and $cmdInput.Length -gt 0) {
                             $cmdInput = $cmdInput.Substring(0, $cmdInput.Length - 1)
-                            [Console]::SetCursorPosition(5 + $cmdInput.Length, $windowHeight - 1)
+                            [Console]::SetCursorPosition($cmdStartCol + $cmdInput.Length, $popupRow + 1)
                             Write-Host " " -NoNewline
-                            [Console]::SetCursorPosition(5 + $cmdInput.Length, $windowHeight - 1)
-                        } elseif ($inputKey.KeyChar -match '[a-zA-Z0-9]') {
+                            [Console]::SetCursorPosition($cmdStartCol + $cmdInput.Length, $popupRow + 1)
+                        } elseif ($inputKey.KeyChar -match '[a-zA-Z0-9\-_/ ]') {
                             $cmdInput += $inputKey.KeyChar
                             Write-Host $inputKey.KeyChar -NoNewline -ForegroundColor White
                         }
                     }
                     Start-Sleep -Milliseconds 50
                 }
+                [Console]::CursorVisible = $false
                 
                 # Execute command if not empty
                 if ($cmdInput.Trim().Length -gt 0) {
                     $result = Invoke-SlashCommand -CommandName $cmdInput -Commands $script:SlashCommands -Version $Version -Author $Author -ScriptRoot $ScriptRoot
-                    if ($result -eq "EXIT") {
+                    if ($result -is [string] -and $result -eq "EXIT") {
                         $running = $false
                     }
                 }
@@ -1336,7 +1444,37 @@ while ($running) {
                 $needsFullRedraw = $true
                 continue
             }
-            
+            # Exit with E key
+            if ($keyChar -eq "E") {
+                Clear-Host
+                Write-Host ""
+                Write-Host ""
+                Write-Host "  ========================================================================" -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "                  Are you sure you want to exit?" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "  ========================================================================" -ForegroundColor Cyan
+                Write-Host ""
+                Write-Host "  " -NoNewline
+                Write-Host "`[Y`]" -ForegroundColor Black -BackgroundColor White -NoNewline
+                Write-Host " Yes, Exit  " -ForegroundColor White -NoNewline
+                Write-Host "`[N`]" -ForegroundColor Black -BackgroundColor White -NoNewline
+                Write-Host " No, Go Back" -ForegroundColor White
+                Write-Host ""
+                
+                while ($true) {
+                    $confirmKey = [Console]::ReadKey($true)
+                    $confirmChar = $confirmKey.KeyChar.ToString().ToUpper()
+                    if ($confirmChar -eq "Y") {
+                        $running = $false
+                        break
+                    } elseif ($confirmChar -eq "N" -or $confirmKey.Key -eq "Escape") {
+                        $needsFullRedraw = $true
+                        break
+                    }
+                }
+                continue
+            }
             # Deep Freeze toggle hotkey
             if ($keyChar -eq "D") {
                 $toggleScript = Join-Path $ScriptRoot "sfu-tools\Toggle-DeepFreeze.ps1"
@@ -1362,9 +1500,12 @@ while ($running) {
                 Invoke-Expression $cmd
                 Write-Host ""
                 Write-Host "Done." -ForegroundColor Green
-                Read-Host "`nPress Enter to continue"
+                Write-Host ""
+                Read-Host "Press Enter to continue"
                 $needsFullRedraw = $true
             }
         }
     }
-} 
+}
+[Console]::CursorVisible = $true
+Clear-Host

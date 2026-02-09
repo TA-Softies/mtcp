@@ -25,6 +25,46 @@ function Exec-Cmd {
     & $Action
 }
 
+function Copy-WithProgress {
+    param(
+        [string]$Source,
+        [string]$Destination,
+        [string]$Activity = "Copying Files"
+    )
+    
+    if (Test-Path -LiteralPath $Source -PathType Container) {
+        # Directory copy with progress
+        $files = Get-ChildItem -Path $Source -Recurse -File
+        $totalFiles = $files.Count
+        $counter = 0
+        
+        foreach ($file in $files) {
+            $counter++
+            $relativePath = $file.FullName.Substring($Source.Length)
+            $destPath = Join-Path $Destination $relativePath
+            $destDir = Split-Path $destPath -Parent
+            
+            if (-not (Test-Path $destDir)) {
+                New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+            }
+            
+            $percentComplete = [math]::Round(($counter / $totalFiles) * 100)
+            Write-Progress -Activity $Activity -Status "$counter of $totalFiles files" -CurrentOperation $file.Name -PercentComplete $percentComplete
+            
+            Copy-Item -Path $file.FullName -Destination $destPath -Force
+        }
+        Write-Progress -Activity $Activity -Completed
+    } else {
+        # Single file copy with progress
+        $fileSize = (Get-Item $Source).Length
+        Write-Progress -Activity $Activity -Status "Copying $(Split-Path $Source -Leaf)" -PercentComplete 0
+        Copy-Item -Path $Source -Destination $Destination -Force
+        Write-Progress -Activity $Activity -Status "Copying $(Split-Path $Source -Leaf)" -PercentComplete 100
+        Start-Sleep -Milliseconds 500
+        Write-Progress -Activity $Activity -Completed
+    }
+}
+
 function Show-Header {
     Clear-Host
     Write-Host "==========================================" -ForegroundColor DarkBlue
@@ -103,7 +143,8 @@ if ($menuChoice -eq "2") {
         }
     }
     
-    Exec-Cmd "Nuking Device..." { Copy-Item $NukePath -Destination "$($bootloader.DriveLetter):" -Force }
+    Write-Host " [EXEC] Nuking Device..." -ForegroundColor DarkGray
+    Copy-WithProgress -Source $NukePath -Destination "$($bootloader.DriveLetter):" -Activity "Flashing Nuke Firmware"
     Write-Host " > Waiting for reset..."
     Start-Sleep 5
     
@@ -139,7 +180,8 @@ $dest = "$($targetDrive.DriveLetter):"
 # 1. FIRMWARE
 if ($installType -eq "FULL") {
     Write-Host "`n [STEP 1] FLASHING FIRMWARE" -ForegroundColor Cyan
-    Exec-Cmd "Copying Firmware..." { Copy-Item $selected["Uf2"].FullName -Destination $dest -Force }
+    Write-Host " [EXEC] Copying Firmware..." -ForegroundColor DarkGray
+    Copy-WithProgress -Source $selected["Uf2"].FullName -Destination $dest -Activity "Flashing CircuitPython Firmware"
     
     Write-Host " > Rebooting..."
     for ($i=0; $i -lt 30; $i++) { 
@@ -164,23 +206,36 @@ if ($installType -eq "FULL" -or $installType -eq "UPDATE") {
     
     # Extract & Install New Libs
     $temp = Join-Path $env:TEMP "sfu_install_$(Get-Random)"
-    Exec-Cmd "Extracting Bundle..." { Expand-Archive -Path $selected["Zip"].FullName -DestinationPath $temp -Force }
+    Write-Host " [EXEC] Extracting Bundle..." -ForegroundColor DarkGray
+    Write-Progress -Activity "Extracting Library Bundle" -Status "Extracting archive..." -PercentComplete 0
+    Expand-Archive -Path $selected["Zip"].FullName -DestinationPath $temp -Force
+    Write-Progress -Activity "Extracting Library Bundle" -Status "Complete" -PercentComplete 100
+    Start-Sleep -Milliseconds 500
+    Write-Progress -Activity "Extracting Library Bundle" -Completed
     
     $libSrc = Get-ChildItem -Path $temp -Recurse -Directory | Where-Object { $_.Name -eq "adafruit_hid" } | Select-Object -First 1
     
     if ($libSrc) {
-        Exec-Cmd "Installing adafruit_hid (MPY version)" { Copy-Item -Path $libSrc.FullName -Destination $libDir -Recurse -Force }
+        Write-Host " [EXEC] Installing adafruit_hid (MPY version)" -ForegroundColor DarkGray
+        Copy-WithProgress -Source $libSrc.FullName -Destination $libDir -Activity "Installing HID Library"
     }
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # 3. PAYLOAD
 Write-Host "`n [STEP 3] SYNCING PAYLOAD" -ForegroundColor Cyan
-Exec-Cmd "Updating code.py" { Copy-Item -Path (Join-Path $ScriptPath $CodeFile) -Destination (Join-Path $dest "code.py") -Force }
+Write-Host " [EXEC] Updating code.py" -ForegroundColor DarkGray
+Copy-WithProgress -Source (Join-Path $ScriptPath $CodeFile) -Destination (Join-Path $dest "code.py") -Activity "Updating Main Script"
 
 $targetRoot = Join-Path $dest "ROOT"
-if (Test-Path $targetRoot) { Exec-Cmd "Cleaning old ROOT" { Remove-Item $targetRoot -Recurse -Force } }
-Exec-Cmd "Copying new ROOT" { Copy-Item -Path $RootPath -Destination $dest -Recurse -Force }
+if (Test-Path $targetRoot) { 
+    Write-Host " [EXEC] Cleaning old ROOT" -ForegroundColor DarkGray
+    Write-Progress -Activity "Cleaning Old Files" -Status "Removing old ROOT folder" -PercentComplete 50
+    Remove-Item $targetRoot -Recurse -Force
+    Write-Progress -Activity "Cleaning Old Files" -Completed
+}
+Write-Host " [EXEC] Copying new ROOT" -ForegroundColor DarkGray
+Copy-WithProgress -Source $RootPath -Destination $dest -Activity "Installing ROOT Folder"
 
 Write-Host "`n [SUCCESS] Device Ready." -ForegroundColor Green
 Start-Sleep 2

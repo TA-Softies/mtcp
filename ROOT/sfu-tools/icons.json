@@ -1,4 +1,4 @@
-{
+﻿{
   "categories": {
     "default": "📦",
     "system": "⚙️",
@@ -10,7 +10,7 @@
     "performance": "📊"
   },
   "tools": {
-    "default": "▸",
+    "default": "🔧",
     "script": "📜",
     "executable": "⚡",
     "diagnostic": "🔍",
