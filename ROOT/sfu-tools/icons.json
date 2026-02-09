@@ -1,0 +1,43 @@
+{
+  "categories": {
+    "default": "📦",
+    "system": "⚙️",
+    "network": "🌐",
+    "disk": "💾",
+    "maintenance": "🔧",
+    "utilities": "🛠️",
+    "security": "🔒",
+    "performance": "📊"
+  },
+  "tools": {
+    "default": "▸",
+    "script": "📜",
+    "executable": "⚡",
+    "diagnostic": "🔍",
+    "cleanup": "🧹",
+    "optimizer": "⚡",
+    "monitor": "📈",
+    "config": "⚙️"
+  },
+  "status": {
+    "online": "🟢",
+    "offline": "🔴",
+    "frozen": "❄️",
+    "thawed": "🔥",
+    "warning": "⚠️",
+    "error": "❌",
+    "success": "✅",
+    "info": "ℹ️"
+  },
+  "ui": {
+    "arrow_right": "▶",
+    "arrow_left": "◀",
+    "arrow_up": "▲",
+    "arrow_down": "▼",
+    "folder_open": "📂",
+    "folder_closed": "📁",
+    "bullet": "•",
+    "check": "✓",
+    "cross": "✗"
+  }
+}

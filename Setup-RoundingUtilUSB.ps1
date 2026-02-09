@@ -1,147 +1,187 @@
 <#
     .SYNOPSIS
-    TA Rounding Util USB Setup (Wizard Mode)
-    Step 1: Configures the RP2040 Key.
-    Step 2: Configures the Main USB Storage.
+    SFU-TOOLS MASTER INSTALLER (Memory-Safe Edition)
+    - Auto-Detects Firmware/Drivers
+    - CLEAN INSTALLS Libraries (Deletes old junk to fix Memory Errors)
+    - Supports Factory Reset (Nuke)
 #>
 param (
-    [string]$FirmwareFile = "adafruit-circuitpython-vcc_gnd_yd_rp2040-en_US-10.0.3.uf2",
-    [string]$BundleZip    = "adafruit-circuitpython-bundle-9.x-mpy-20260129.zip",
     [string]$CodeFile     = "code.py",
     [string]$SourceFolder = "ROOT",
-    [string]$TargetLabel  = "TA-RoundingUtilsUSB"
+    [string]$FirmwareDir  = "firmware",
+    [string]$NukeFile     = "flash_nuke.uf2"
 )
 
 $ErrorActionPreference = "Stop"
+$ScriptPath = $PSScriptRoot
+$RootPath   = Join-Path $ScriptPath $SourceFolder
+$FirmwarePath = Join-Path $ScriptPath $FirmwareDir
+$NukePath   = Join-Path $FirmwarePath $NukeFile
+
+# --- HELPER: LOGGING ---
+function Exec-Cmd {
+    param([string]$Message, [scriptblock]$Action)
+    Write-Host " [EXEC] $Message" -ForegroundColor DarkGray
+    & $Action
+}
 
 function Show-Header {
     Clear-Host
     Write-Host "==========================================" -ForegroundColor DarkBlue
-    Write-Host "        TA ROUNDING UTIL USB SETUP        " -ForegroundColor Cyan -BackgroundColor DarkBlue
+    Write-Host "       SFU-TOOLS MASTER SETUP             " -ForegroundColor Cyan -BackgroundColor DarkBlue
     Write-Host "==========================================" -ForegroundColor DarkBlue
-    Write-Host ""
 }
 
-function Pause-Step {
-    param($Message)
-    Write-Host ""
-    Write-Host " $Message" -ForegroundColor Yellow
-    Read-Host " Press [ENTER] to continue..."
-}
-
-# --- PRE-FLIGHT CHECK ---
 Show-Header
-Write-Host " Checking files..." -ForegroundColor DarkGray
-if (-not (Test-Path $FirmwareFile)) { Write-Error "Missing Firmware: $FirmwareFile"; exit }
-if (-not (Test-Path $BundleZip))    { Write-Error "Missing Zip: $BundleZip"; exit }
-if (-not (Test-Path $CodeFile))     { Write-Error "Missing Script: $CodeFile"; exit }
-if (-not (Test-Path $SourceFolder)) { Write-Error "Missing Folder: $SourceFolder"; exit }
-Write-Host " Files OK." -ForegroundColor Green
 
 # ==========================================
-# STEP 1: INSTALL KEY (RP2040)
+# PHASE 1: SCANNING
 # ==========================================
-Write-Host "`n [STEP 1/2] CONFIGURE LAUNCH KEY (RP2040)" -ForegroundColor Cyan
-Write-Host " ---------------------------------------" -ForegroundColor DarkGray
-Write-Host " 1. Unplug the board."
-Write-Host " 2. Hold the BOOT button."
-Write-Host " 3. Plug it into USB."
-Write-Host " 4. Release BOOT button."
+if (-not (Test-Path $FirmwarePath)) { Write-Error "Firmware folder missing!"; exit }
 
-Pause-Step "Ready to flash?"
+Write-Host " Scanning firmware..." -ForegroundColor Yellow
+$allZips = Get-ChildItem -Path $FirmwarePath -Filter "*.zip"
+$allUf2s = Get-ChildItem -Path $FirmwarePath -Filter "*.uf2"
+$validPairs = @{}
 
-# 1. Detect & Flash
-Write-Host " > Searching for board..." -NoNewline
-$bootloader = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }
-$circuitpy  = Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }
+# Pair Logic
+foreach ($zip in $allZips) {
+    if ($zip.Name -match "bundle-(\d+)\.x") {
+        $ver = [int]$matches[1]
+        if (-not $validPairs.ContainsKey($ver)) { $validPairs[$ver] = @{} }
+        $validPairs[$ver]["Zip"] = $zip
+    }
+}
+foreach ($uf2 in $allUf2s) {
+    if ($uf2.Name -notmatch "nuke" -and $uf2.Name -match "[-_](\d+)\.\d+\.\d+") {
+        $ver = [int]$matches[1]
+        if ($validPairs.ContainsKey($ver)) {
+            $validPairs[$ver]["Uf2"] = $uf2 # Simple take-last logic
+        }
+    }
+}
 
-if ($bootloader) {
-    Write-Host " Found Bootloader ($($bootloader.DriveLetter):)" -ForegroundColor Green
-    Write-Host " > Flashing Firmware..." -NoNewline
-    Copy-Item $FirmwareFile -Destination "$($bootloader.DriveLetter):"
-    Write-Host " Done."
+# Select Best Pair
+$sortedVersions = $validPairs.Keys | Sort-Object -Descending
+$selected = $null
+foreach ($v in $sortedVersions) {
+    if ($validPairs[$v].ContainsKey("Zip") -and $validPairs[$v].ContainsKey("Uf2")) {
+        $selected = $validPairs[$v]
+        break
+    }
+}
+
+if (-not $selected) { Write-Error "No matching Firmware+Driver pairs found."; exit }
+Write-Host " [LOADED] Version: v$($sortedVersions[0]).x" -ForegroundColor Green
+
+# ==========================================
+# PHASE 2: MENU
+# ==========================================
+Write-Host "`n SELECT OPERATION:" -ForegroundColor Yellow
+Write-Host " [1] SMART INSTALL (Auto-Detect)"
+Write-Host " [2] FORCE NUKE (Factory Reset)"
+Write-Host " [3] UPDATE CODE & PAYLOAD (Skip Firmware)"
+Write-Host " [Q] QUIT"
+
+$menuChoice = Read-Host " > Selection"
+if ($menuChoice -eq "Q") { exit }
+
+# ==========================================
+# PHASE 3: EXECUTION
+# ==========================================
+
+# --- MODE: NUKE ---
+if ($menuChoice -eq "2") {
+    Write-Host "`n [MODE] FORCE FACTORY RESET" -ForegroundColor Red
+    $bootloader = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }
     
-    Write-Host " > Waiting for Reboot..." -NoNewline
+    if (-not $bootloader) {
+        Write-Host " Please switch device to BOOTLOADER mode (Hold BOOT -> Plug in)."
+        while (-not $bootloader) {
+            $bootloader = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }
+            Start-Sleep 1
+        }
+    }
+    
+    Exec-Cmd "Nuking Device..." { Copy-Item $NukePath -Destination "$($bootloader.DriveLetter):" -Force }
+    Write-Host " > Waiting for reset..."
+    Start-Sleep 5
+    
+    while (-not (Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" })) { Start-Sleep 1 }
+    $targetDrive = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }
+    $installType = "FULL"
+}
+# --- MODE: SMART ---
+elseif ($menuChoice -eq "1") {
+    Write-Host " > Waiting for device..."
+    while ($true) {
+        if ($b = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }) { 
+            $targetDrive = $b; $installType = "FULL"; break 
+        }
+        if ($c = Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }) {
+            $targetDrive = $c; $installType = "UPDATE"; break
+        }
+        Start-Sleep 1
+    }
+}
+# --- MODE: UPDATE ---
+elseif ($menuChoice -eq "3") {
+    $targetDrive = Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }
+    if (-not $targetDrive) { Write-Error "Device not found."; exit }
+    $installType = "UPDATE"
+}
+
+# ==========================================
+# PHASE 4: INSTALLATION
+# ==========================================
+$dest = "$($targetDrive.DriveLetter):"
+
+# 1. FIRMWARE
+if ($installType -eq "FULL") {
+    Write-Host "`n [STEP 1] FLASHING FIRMWARE" -ForegroundColor Cyan
+    Exec-Cmd "Copying Firmware..." { Copy-Item $selected["Uf2"].FullName -Destination $dest -Force }
+    
+    Write-Host " > Rebooting..."
     for ($i=0; $i -lt 30; $i++) { 
         Start-Sleep 1
-        if (Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }) { break }
-        Write-Host "." -NoNewline 
+        if ($c = Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }) { 
+            $targetDrive = $c; break 
+        }
     }
-    Write-Host ""
-    $circuitpy = Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }
-} elseif ($circuitpy) {
-    Write-Host " Found existing CIRCUITPY ($($circuitpy.DriveLetter):)" -ForegroundColor Green
-} else {
-    Write-Warning " Board not found. Skipping Key setup."
+    $dest = "$($targetDrive.DriveLetter):"
 }
 
-if ($circuitpy) {
-    $dest = "$($circuitpy.DriveLetter):"
+# 2. LIBRARIES (CRITICAL FIX FOR MEMORY ERROR)
+if ($installType -eq "FULL" -or $installType -eq "UPDATE") {
+    Write-Host "`n [STEP 2] INSTALLING LIBRARIES" -ForegroundColor Cyan
     
-    # 2. Install Libs
-    Write-Host " > Installing Drivers (HID)..."
-    $temp = Join-Path $env:TEMP "ta_install_$(Get-Random)"
-    Expand-Archive -Path $BundleZip -DestinationPath $temp -Force
+    # Force Clean Old Libs
+    $libDir = Join-Path $dest "lib"
+    if (Test-Path $libDir) {
+        Exec-Cmd "Deleting old 'lib' folder (Clean Install)" { Remove-Item $libDir -Recurse -Force }
+    }
+    New-Item -Path $libDir -ItemType Directory | Out-Null
+    
+    # Extract & Install New Libs
+    $temp = Join-Path $env:TEMP "sfu_install_$(Get-Random)"
+    Exec-Cmd "Extracting Bundle..." { Expand-Archive -Path $selected["Zip"].FullName -DestinationPath $temp -Force }
+    
     $libSrc = Get-ChildItem -Path $temp -Recurse -Directory | Where-Object { $_.Name -eq "adafruit_hid" } | Select-Object -First 1
     
     if ($libSrc) {
-        $libDest = Join-Path $dest "lib"
-        if (-not (Test-Path $libDest)) { New-Item -ItemType Directory -Path $libDest | Out-Null }
-        Copy-Item -Path $libSrc.FullName -Destination $libDest -Recurse -Force
+        Exec-Cmd "Installing adafruit_hid (MPY version)" { Copy-Item -Path $libSrc.FullName -Destination $libDir -Recurse -Force }
     }
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
-
-    # 3. Install Code
-    Write-Host " > Uploading Payload..."
-    Copy-Item -Path $CodeFile -Destination (Join-Path $dest "code.py") -Force
-    Write-Host " [KEY SETUP COMPLETE]" -ForegroundColor Green
 }
 
-# ==========================================
-# STEP 2: INSTALL STORAGE (MAIN USB)
-# ==========================================
-Write-Host "`n [STEP 2/2] CONFIGURE MAIN STORAGE" -ForegroundColor Cyan
-Write-Host " ---------------------------------------" -ForegroundColor DarkGray
-Write-Host " Plug in your large USB Flash Drive (SanDisk, Kingston, etc)."
+# 3. PAYLOAD
+Write-Host "`n [STEP 3] SYNCING PAYLOAD" -ForegroundColor Cyan
+Exec-Cmd "Updating code.py" { Copy-Item -Path (Join-Path $ScriptPath $CodeFile) -Destination (Join-Path $dest "code.py") -Force }
 
-Pause-Step "Ready to configure storage?"
+$targetRoot = Join-Path $dest "ROOT"
+if (Test-Path $targetRoot) { Exec-Cmd "Cleaning old ROOT" { Remove-Item $targetRoot -Recurse -Force } }
+Exec-Cmd "Copying new ROOT" { Copy-Item -Path $RootPath -Destination $dest -Recurse -Force }
 
-# 1. List Drives (Filter out the Key)
-$drives = Get-Volume | Where-Object { $_.DriveType -eq 'Removable' -and $_.DriveLetter -and $_.FileSystemLabel -ne "CIRCUITPY" -and $_.FileSystemLabel -ne "RPI-RP2" }
-
-if (-not $drives) {
-    Write-Warning " No generic USB drives found. Setup complete."
-    exit
-}
-
-Write-Host " Select target drive:"
-$i = 1
-foreach ($d in $drives) {
-    $size = [math]::Round($d.SizeRemaining/1GB, 1)
-    Write-Host " [$i] ($($d.DriveLetter):) $($d.FileSystemLabel) [Free: $size GB]"
-    $i++
-}
-
-$sel = Read-Host " Enter Number"
-if ($sel -lt 1 -or $sel -gt $drives.Count) { 
-    Write-Error " Invalid selection. Exiting."
-    exit 
-}
-
-$target = $drives[$sel-1]
-$dLetter = "$($target.DriveLetter):"
-
-# 2. Install
-Write-Host " > Renaming drive to '$TargetLabel'..."
-Set-Volume -DriveLetter $target.DriveLetter -NewFileSystemLabel $TargetLabel
-
-Write-Host " > Copying ROOT files..."
-Copy-Item -Path "$SourceFolder\*" -Destination $dLetter -Recurse -Force
-
-Write-Host " [STORAGE SETUP COMPLETE]" -ForegroundColor Green
-Write-Host "`n==========================================" -ForegroundColor DarkBlue
-Write-Host "       ALL SYSTEMS OPERATIONAL            " -ForegroundColor Cyan -BackgroundColor DarkBlue
-Write-Host "==========================================" -ForegroundColor DarkBlue
-Write-Host " 1. Remove both devices."
-Write-Host " 2. To use: Plug in Storage first, then Key."
+Write-Host "`n [SUCCESS] Device Ready." -ForegroundColor Green
 Start-Sleep 2
+pause

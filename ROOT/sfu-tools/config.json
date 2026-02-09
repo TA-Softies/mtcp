@@ -1,7 +1,77 @@
 {
     "meta": {
-        "version": "0.2.4",
+        "version": "0.2.5",
         "author": "TA Software Functional Unit."
+    },
+    "commands": {
+        "help": {
+            "description": "Show available commands and help information",
+            "action": "show-help"
+        },
+        "credits": {
+            "description": "Show application credits and information",
+            "action": "show-credits"
+        },
+        "wallpaper": {
+            "description": "Change desktop wallpaper",
+            "action": "run-script",
+            "script": "$PSScriptRoot\\sfu-tools\\Set-Wallpaper.ps1"
+        },
+        "debug": {
+            "description": "Open debug menu",
+            "action": "show-debug"
+        },
+        "update": {
+            "description": "Check for updates",
+            "action": "check-update"
+        },
+        "version": {
+            "description": "Show current version",
+            "action": "show-version"
+        },
+        "sfc": {
+            "description": "Run System File Checker",
+            "action": "run-command",
+            "command": "sfc /scannow"
+        },
+        "cleanup": {
+            "description": "Run Disk Cleanup utility",
+            "action": "run-command",
+            "command": "cleanmgr.exe"
+        },
+        "defrag": {
+            "description": "Open Defragment and Optimize Drives",
+            "action": "run-command",
+            "command": "dfrgui.exe"
+        },
+        "taskmgr": {
+            "description": "Open Task Manager",
+            "action": "run-command",
+            "command": "taskmgr.exe"
+        },
+        "devmgmt": {
+            "description": "Open Device Manager",
+            "action": "run-command",
+            "command": "devmgmt.msc"
+        },
+        "services": {
+            "description": "Open Services Manager",
+            "action": "run-command",
+            "command": "services.msc"
+        },
+        "reset": {
+            "description": "Reset network configuration",
+            "action": "run-command",
+            "command": "ipconfig /release & ipconfig /flushdns & ipconfig /renew & netsh winsock reset & netsh int ip reset"
+        },
+        "exit": {
+            "description": "Exit the application",
+            "action": "exit"
+        },
+        "quit": {
+            "description": "Exit the application",
+            "action": "exit"
+        }
     },
     "categories": [
         {

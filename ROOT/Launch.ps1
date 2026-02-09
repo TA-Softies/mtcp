@@ -36,8 +36,10 @@ Clear-Host
 # --- Configuration ---
 $ScriptRoot = $PSScriptRoot
 $ConfigPath = Join-Path $ScriptRoot "sfu-tools\config.json"
+$IconsPath = Join-Path $ScriptRoot "sfu-tools\icons.json"
 $DFPath     = "C:\Windows\SysWOW64\DFC.exe" # Deep Freeze Console CLI
 $AppTitle   = "TECHNICAL ASSISTANTS"
+$DebugMode  = $false
 
 # --- Helper Functions ---
 
@@ -230,16 +232,28 @@ function Show-LoadingScreen {
     Clear-Host
     
     Write-Host ""
-    $line1 = "  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580
-    $line2 = "  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588
+    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                                                                       " -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    $line1 = "  ║  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + "  ║"
+    $line2 = "  ║  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588 + "  ║"
     [Console]::WriteLine($line1)
     [Console]::WriteLine($line2)
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                                                                       " -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "              MULTI-TOOL CONTROL PANEL v$Version" -NoNewline -ForegroundColor Gray
+    $spaces = 73 - 38 - $Version.Length
+    Write-Host (" " * $spaces) -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                                                                       " -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "                  MULTI-TOOL CONTROL PANEL v$Version" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host ""
-    Write-Host ""
-    Write-Host "                  Checking for updates" -ForegroundColor Yellow -NoNewline
+    Write-Host "                    🔄 Checking for updates" -ForegroundColor Yellow -NoNewline
     
     # Animated dots
     for ($i = 0; $i -lt 3; $i++) {
@@ -248,6 +262,250 @@ function Show-LoadingScreen {
     }
     
     Write-Host ""
+}
+
+function Get-Icon {
+    param(
+        [string]$Category,
+        [string]$Type
+    )
+    
+    if (-not $script:Icons) { return "" }
+    
+    # Try to find icon in the specified category
+    if ($script:Icons.$Category -and $script:Icons.$Category.$Type) {
+        return $script:Icons.$Category.$Type + " "
+    }
+    
+    # Fallback to default
+    if ($script:Icons.$Category -and $script:Icons.$Category.default) {
+        return $script:Icons.$Category.default + " "
+    }
+    
+    return ""
+}
+
+function Get-ProcessInfo {
+    $process = Get-Process -Id $PID
+    $cpuTime = $process.TotalProcessorTime.TotalSeconds
+    $memoryMB = [math]::Round($process.WorkingSet64 / 1MB, 2)
+    $threads = $process.Threads.Count
+    $handles = $process.HandleCount
+    
+    return [PSCustomObject]@{
+        CPU = "$cpuTime s"
+        Memory = "$memoryMB MB"
+        Threads = $threads
+        Handles = $handles
+        StartTime = $process.StartTime.ToString("yyyy-MM-dd HH:mm:ss")
+    }
+}
+
+function Show-HelpScreen {
+    param(
+        [hashtable]$Commands
+    )
+    
+    Clear-Host
+    Write-Host ""
+    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                          ❓ HELP MENU                            " -NoNewline -ForegroundColor Yellow
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  💬 Available Commands:" -ForegroundColor Yellow
+    Write-Host "  " -NoNewline
+    Write-Host ("─" * 73) -ForegroundColor DarkGray
+    Write-Host ""
+    
+    foreach ($cmdName in ($Commands.Keys | Sort-Object)) {
+        $cmd = $Commands[$cmdName]
+        Write-Host "    /$cmdName" -NoNewline -ForegroundColor Cyan
+        $padding = 20 - $cmdName.Length
+        if ($padding -lt 2) { $padding = 2 }
+        Write-Host (" " * $padding) -NoNewline
+        Write-Host $cmd.description -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    Write-Host "  🎮 Navigation:" -ForegroundColor Yellow
+    Write-Host "    • Press " -NoNewline -ForegroundColor Gray
+    Write-Host "." -NoNewline -ForegroundColor Cyan
+    Write-Host " to open command prompt" -ForegroundColor Gray
+    Write-Host "    • Use " -NoNewline -ForegroundColor Gray
+    Write-Host "▲/▼" -NoNewline -ForegroundColor Cyan
+    Write-Host " arrows to navigate menu" -ForegroundColor Gray
+    Write-Host "    • Press " -NoNewline -ForegroundColor Gray
+    Write-Host "ENTER" -NoNewline -ForegroundColor Cyan
+    Write-Host " to select an item" -ForegroundColor Gray
+    Write-Host "    • Press " -NoNewline -ForegroundColor Gray
+    Write-Host "ESC" -NoNewline -ForegroundColor Red
+    Write-Host " to go back or exit" -ForegroundColor Gray
+    Write-Host ""
+    Read-Host "  Press Enter to continue"
+}
+
+function Show-CreditsScreen {
+    param(
+        [string]$Version,
+        [string]$Author
+    )
+    
+    Clear-Host
+    Write-Host ""
+    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                        ⭐ CREDITS                               " -NoNewline -ForegroundColor Yellow
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host ""
+    $line1 = "      " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580
+    $line2 = "      " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591
+    [Console]::WriteLine($line1)
+    [Console]::WriteLine($line2)
+    Write-Host ""
+    Write-Host "                    MULTI-TOOL CONTROL PANEL" -ForegroundColor Cyan
+    Write-Host "                         Version $Version" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host ""
+    Write-Host "  👥 Developed by:" -ForegroundColor Yellow
+    Write-Host "     $Author" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  🏢 Organization:" -ForegroundColor Yellow
+    Write-Host "     Technical Assistants" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  🔗 Repository:" -ForegroundColor Yellow
+    Write-Host "     https://github.com/TA-Softies/mtcp" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  ⚙️  Built with:" -ForegroundColor Yellow
+    Write-Host "     PowerShell 5.1+" -ForegroundColor White
+    Write-Host "     Windows 10/11 Compatible" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  ❤️  Special Thanks:" -ForegroundColor Yellow
+    Write-Host "     SFU Technical Team" -ForegroundColor White
+    Write-Host "     GitHub Copilot Assistant" -ForegroundColor White
+    Write-Host ""
+    Read-Host "  Press Enter to continue"
+}
+
+function Invoke-SlashCommand {
+    param(
+        [string]$CommandName,
+        [hashtable]$Commands,
+        [string]$Version,
+        [string]$Author,
+        [string]$ScriptRoot
+    )
+    
+    # Remove leading slash if present
+    $CommandName = $CommandName.TrimStart('/')
+    
+    if (-not $Commands.ContainsKey($CommandName)) {
+        Clear-Host
+        Write-Host ""
+        Write-Host "  ❌ Command not found: " -NoNewline -ForegroundColor Red
+        Write-Host "/$CommandName" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  Type " -NoNewline -ForegroundColor Gray
+        Write-Host "/help" -NoNewline -ForegroundColor Cyan
+        Write-Host " to see available commands." -ForegroundColor Gray
+        Write-Host ""
+        Start-Sleep -Seconds 2
+        return $false
+    }
+    
+    $cmd = $Commands[$CommandName]
+    
+    switch ($cmd.action) {
+        "show-help" {
+            Show-HelpScreen -Commands $Commands
+            return $true
+        }
+        "show-credits" {
+            Show-CreditsScreen -Version $Version -Author $Author
+            return $true
+        }
+        "show-debug" {
+            Show-DebugMenu -Version $Version -ScriptRoot $ScriptRoot
+            return $true
+        }
+        "show-version" {
+            Clear-Host
+            Write-Host ""
+            Write-Host "  📄 Current Version: " -NoNewline -ForegroundColor Yellow
+            Write-Host "v$Version" -ForegroundColor Cyan
+            Write-Host ""
+            Start-Sleep -Seconds 2
+            return $true
+        }
+        "check-update" {
+            Clear-Host
+            Write-Host ""
+            Write-Host "  🔄 Checking for updates..." -ForegroundColor Yellow
+            Write-Host ""
+            
+            $updateCheckScript = Join-Path $ScriptRoot "sfu-tools\Check-Update.ps1"
+            if (Test-Path $updateCheckScript) {
+                $updateInfo = & $updateCheckScript -CurrentVersion $Version
+                
+                if ($updateInfo -and $updateInfo.UpdateAvailable) {
+                    Write-Host "  ✅ Update available!" -ForegroundColor Green
+                    Write-Host "     Current: v$($updateInfo.CurrentVersion)" -ForegroundColor White
+                    Write-Host "     Latest:  v$($updateInfo.RemoteVersion)" -ForegroundColor Cyan
+                    Write-Host ""
+                    $confirm = Read-Host "  Install update? (Y/N)"
+                    if ($confirm -eq 'Y') {
+                        $installScript = Join-Path $ScriptRoot "sfu-tools\Install-Update.ps1"
+                        if (Test-Path $installScript) {
+                            & $installScript -DownloadUrl $updateInfo.DownloadUrl -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion
+                            Exit
+                        }
+                    }
+                } else {
+                    Write-Host "  ✅ You are running the latest version!" -ForegroundColor Green
+                    Write-Host ""
+                    Start-Sleep -Seconds 2
+                }
+            }
+            return $true
+        }
+        "run-script" {
+            $scriptPath = $cmd.script -replace '\$PSScriptRoot', $ScriptRoot
+            if (Test-Path $scriptPath) {
+                Clear-Host
+                Write-Host "Executing: $CommandName..." -ForegroundColor Yellow
+                Write-Host ""
+                & $scriptPath
+                Write-Host ""
+                Write-Host "Done." -ForegroundColor Green
+                Read-Host "`nPress Enter to continue"
+            } else {
+                Write-Host "  ❌ Script not found: $scriptPath" -ForegroundColor Red
+                Start-Sleep -Seconds 2
+            }
+            return $true
+        }
+        "run-command" {
+            Clear-Host
+            Write-Host "Executing: $CommandName..." -ForegroundColor Yellow
+            Write-Host ""
+            Invoke-Expression $cmd.command
+            Write-Host ""
+            Write-Host "Done." -ForegroundColor Green
+            Read-Host "`nPress Enter to continue"
+            return $true
+        }
+        "exit" {
+            return "EXIT"
+        }
+        default {
+            Write-Host "  ❌ Unknown action: $($cmd.action)" -ForegroundColor Red
+            Start-Sleep -Seconds 2
+            return $false
+        }
+    }
 }
 
 function Get-SysInfo {
@@ -348,64 +606,145 @@ function Draw-Header {
     param($Info, $Version, $Breadcrumb = "Main Menu", $Subtitle = "")
     Clear-Host
     
-    # ASCII Banner - TECHNICAL ASSISTANTS
+    # Modern ASCII Banner with box drawing
     Write-Host ""
-    Write-Host "  ========================================================================" -ForegroundColor Cyan
-    Write-Host ""
-    $line1 = "  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580
-    $line2 = "  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588
+    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                                                                       " -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    $line1 = "  ║  " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2588 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2591 + "   " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2580 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2584 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2591 + [char]0x2588 + " " + [char]0x2580 + [char]0x2588 + [char]0x2580 + " " + [char]0x2588 + [char]0x2580 + "  ║"
+    $line2 = "  ║  " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2588 + [char]0x2584 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2584 + [char]0x2584 + "   " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2588 + " " + [char]0x2584 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2588 + [char]0x2580 + [char]0x2588 + " " + [char]0x2588 + [char]0x2591 + [char]0x2580 + [char]0x2588 + " " + [char]0x2591 + [char]0x2588 + [char]0x2591 + " " + [char]0x2584 + [char]0x2588 + "  ║"
     [Console]::WriteLine($line1)
     [Console]::WriteLine($line2)
-    Write-Host ""
-    Write-Host "                  MULTI-TOOL CONTROL PANEL v$Version" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "  ========================================================================" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                                                                       " -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "              MULTI-TOOL CONTROL PANEL v$Version" -NoNewline -ForegroundColor Gray
+    $spaces = 73 - 38 - $Version.Length
+    Write-Host (" " * $spaces) -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host "                                                                       " -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
 
-    # Info Grid - Compact Layout
-    # Row 1: System
-    Write-Host " [SYS] " -NoNewline -ForegroundColor Yellow
-    Write-Host "HOST: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Name)" -ForegroundColor White
+    # Modern Info Grid with Icons
+    Write-Host "  ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkCyan
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "💻 " -NoNewline -ForegroundColor Yellow
+    Write-Host "HOST: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Name)" -NoNewline -ForegroundColor White
+    $padding = 69 - 10 - $Info.Name.Length
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
     
-    Write-Host " [MDL] " -NoNewline -ForegroundColor Yellow
-    Write-Host " " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Model)" -ForegroundColor White
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "🖥️  " -NoNewline -ForegroundColor Yellow
+    Write-Host "MODEL: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Model)" -NoNewline -ForegroundColor White
+    $padding = 67 - 13 - $Info.Model.Length
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
     
-    Write-Host " [WIN] " -NoNewline -ForegroundColor Yellow
-    Write-Host " " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.OS)" -ForegroundColor White
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "🪟 " -NoNewline -ForegroundColor Yellow
+    Write-Host "OS: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.OS)" -NoNewline -ForegroundColor White
+    $padding = 71 - 8 - $Info.OS.Length
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
     
-    Write-Host " [UPT] " -NoNewline -ForegroundColor Yellow
-    Write-Host " " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Uptime)" -NoNewline -ForegroundColor White
-    Write-Host "  |  " -NoNewline -ForegroundColor DarkGray
-    Write-Host "TIME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.BootTime)" -ForegroundColor White
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "⏱️  " -NoNewline -ForegroundColor Yellow
+    Write-Host "UPTIME: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Uptime)" -NoNewline -ForegroundColor White
+    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "BOOT: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.BootTime)" -NoNewline -ForegroundColor White
+    $totalLen = 12 + $Info.Uptime.Length + 10 + $Info.BootTime.Length
+    $padding = 70 - $totalLen
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
     
-    Write-Host " [NET] " -NoNewline -ForegroundColor Yellow
-    if ($Info.NetStatus -eq "Connected") { Write-Host "ONLINE" -NoNewline -ForegroundColor Green } else { Write-Host "OFFLINE" -NoNewline -ForegroundColor Red }
-    Write-Host "  |  " -NoNewline -ForegroundColor DarkGray
-    Write-Host "MODE: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Net)" -ForegroundColor White
-    
-    # Row 2: Hardware
-    Write-Host " [H/W] " -NoNewline -ForegroundColor Yellow
-    Write-Host "MOBO: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Mobo)" -NoNewline -ForegroundColor White
-    Write-Host "  |  " -NoNewline -ForegroundColor DarkGray
-    Write-Host "RAM: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.RAM)" -ForegroundColor White
-
-    # Column 3: Deep Freeze (Highlighted)
-    Write-Host " [DFC] " -NoNewline -ForegroundColor Yellow
-    Write-Host "STATUS: " -NoNewline -ForegroundColor DarkGray
-    Write-Host " $($Info.DF) " -ForegroundColor Black -BackgroundColor $Info.DFCol
-    
-    Write-Host ("-" * 76) -ForegroundColor DarkGray
-    Write-Host " Navigation: " -NoNewline -ForegroundColor Yellow
-    Write-Host "$Breadcrumb" -ForegroundColor White
-    if ($Subtitle) {
-        Write-Host "             " -NoNewline
-        Write-Host "$Subtitle" -ForegroundColor DarkCyan
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    if ($Info.NetStatus -eq "Connected") { 
+        Write-Host "🌐 " -NoNewline -ForegroundColor Green
+        Write-Host "NETWORK: " -NoNewline -ForegroundColor DarkGray
+        Write-Host "ONLINE" -NoNewline -ForegroundColor Green
+    } else { 
+        Write-Host "🌐 " -NoNewline -ForegroundColor Red
+        Write-Host "NETWORK: " -NoNewline -ForegroundColor DarkGray
+        Write-Host "OFFLINE" -NoNewline -ForegroundColor Red
     }
-    Write-Host ("-" * 76) -ForegroundColor DarkGray
+    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "$($Info.Net)" -NoNewline -ForegroundColor White
+    $netLen = 13 + ($Info.NetStatus -eq "Connected" ? 6 : 7) + $Info.Net.Length
+    $padding = 70 - $netLen
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
+    
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    Write-Host "🔩 " -NoNewline -ForegroundColor Yellow
+    Write-Host "MOBO: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.Mobo)" -NoNewline -ForegroundColor White
+    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "💾 " -NoNewline -ForegroundColor Yellow
+    Write-Host "RAM: " -NoNewline -ForegroundColor DarkGray; Write-Host "$($Info.RAM)" -NoNewline -ForegroundColor White
+    $hwLen = 11 + $Info.Mobo.Length + 11 + $Info.RAM.Length
+    $padding = 70 - $hwLen
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
+
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkCyan
+    if ($Info.DF -eq "FROZEN") {
+        Write-Host "❄️  " -NoNewline -ForegroundColor Cyan
+    } elseif ($Info.DF -eq "THAWED") {
+        Write-Host "🔥 " -NoNewline -ForegroundColor Red
+    } else {
+        Write-Host "🔒 " -NoNewline -ForegroundColor Gray
+    }
+    Write-Host "DEEP FREEZE: " -NoNewline -ForegroundColor DarkGray
+    Write-Host " $($Info.DF) " -ForegroundColor Black -BackgroundColor $Info.DFCol -NoNewline
+    $dfLen = 17 + $Info.DF.Length + 2
+    $padding = 70 - $dfLen
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkCyan
+    Write-Host "  └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkCyan
+    
+    Write-Host ""
+    Write-Host "  ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "📍 " -NoNewline -ForegroundColor Yellow
+    Write-Host "$Breadcrumb" -NoNewline -ForegroundColor White
+    $padding = 68 - $Breadcrumb.Length
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkGray
+    if ($Subtitle) {
+        Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+        Write-Host "ℹ️  " -NoNewline -ForegroundColor DarkCyan
+        Write-Host "$Subtitle" -NoNewline -ForegroundColor DarkCyan
+        $padding = 68 - $Subtitle.Length
+        if ($padding -lt 0) { $padding = 1 }
+        Write-Host (" " * $padding) -NoNewline
+        Write-Host "│" -ForegroundColor DarkGray
+    }
+    Write-Host "  └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host ""
     $dfAction = if ($Info.DF -eq "FROZEN") { "Thaw" } elseif ($Info.DF -eq "THAWED") { "Freeze" } else { "DF" }
-    Write-Host " [ENTER] Run  |  [W] Wallpaper  |  [D] $dfAction  |  " -NoNewline -ForegroundColor Yellow
-    Write-Host "[ESC] Back/Exit" -ForegroundColor Red
-    Write-Host ("-" * 76) -ForegroundColor DarkGray
+    Write-Host "  ⌨️  " -NoNewline -ForegroundColor Yellow
+    Write-Host "[ENTER]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host " Run  " -NoNewline -ForegroundColor Yellow
+    Write-Host "[W]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host " Wallpaper  " -NoNewline -ForegroundColor Yellow
+    Write-Host "[D]" -NoNewline -ForegroundColor Black -BackgroundColor White
+    Write-Host " $dfAction  " -NoNewline -ForegroundColor Yellow
+    Write-Host "[ESC]" -NoNewline -ForegroundColor White -BackgroundColor Red
+    Write-Host " Back/Exit" -ForegroundColor Red
+    Write-Host "  " -NoNewline
+    Write-Host ("─" * 73) -ForegroundColor DarkGray
 }
 
 function Draw-Menu {
@@ -415,30 +754,33 @@ function Draw-Menu {
     $startPos = [Console]::CursorTop
     
     for ($i = 0; $i -lt $MenuItems.Count; $i++) {
-        $prefix = "   "
+        $prefix = "    "
         $color = "White"
-        $itemPrefix = ""
+        $icon = ""
         
-        # Add prefix and colors based on item type
+        # Add icons and colors based on item type
         if ($MenuItems[$i].Type -eq "category") {
-            $itemPrefix = "[+] "
+            $icon = Get-Icon "categories" "default"
             $color = "Gray"
         } elseif ($MenuItems[$i].Type -eq "subcategory") {
-            $itemPrefix = "[-] "
+            $icon = Get-Icon "ui" "folder_open"
             $color = "DarkGray"
+        } else {
+            $icon = Get-Icon "tools" "default"
+            $color = "White"
         }
         
         if ($i -eq $Selection) {
-            $prefix = " > "
+            $prefix = "  ▶ "
             if ($MenuItems[$i].Type -eq "category") {
-                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor White
+                Write-Host "$prefix$icon$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor White
             } elseif ($MenuItems[$i].Type -eq "subcategory") {
-                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Gray
+                Write-Host "$prefix$icon$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Gray
             } else {
-                Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Cyan
+                Write-Host "$prefix$icon$($MenuItems[$i].Name)" -ForegroundColor Black -BackgroundColor Cyan
             }
         } else {
-            Write-Host "$prefix$itemPrefix$($MenuItems[$i].Name)" -ForegroundColor $color
+            Write-Host "$prefix$icon$($MenuItems[$i].Name)" -ForegroundColor $color
         }
     }
 }
@@ -449,40 +791,34 @@ function Draw-Footer {
     # Calculate cursor position for bottom of window (line 35)
     $windowHeight = 35
     $currentPos = [Console]::CursorTop
-    $linesToBottom = $windowHeight - $currentPos - 3
+    $linesToBottom = $windowHeight - $currentPos - 2
     
     if ($linesToBottom -gt 0) {
         Write-Host ("`n" * $linesToBottom)
     }
     
-    Write-Host ("=" * 76) -ForegroundColor DarkGray
+    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor DarkGray
+    Write-Host "  ║ " -NoNewline -ForegroundColor DarkGray
     
-    # Build footer line with proper escaping
-    $upArrow = [char]0x2191
-    $downArrow = [char]0x2193
-    $leftBracket = [char]0x5B
-    $rightBracket = [char]0x5D
-    $pipeChar = [char]0x7C
-    
-    Write-Host " " -NoNewline
-    Write-Host $leftBracket -NoNewline -ForegroundColor DarkGray
-    [Console]::Write($upArrow)
+    # Navigation hints
+    Write-Host "▲" -NoNewline -ForegroundColor Yellow
     Write-Host "/" -NoNewline -ForegroundColor DarkGray
-    [Console]::Write($downArrow)
-    Write-Host $rightBracket -NoNewline -ForegroundColor DarkGray
-    Write-Host " Navigate  " -NoNewline -ForegroundColor White
-    Write-Host $leftBracket -NoNewline -ForegroundColor DarkGray
-    Write-Host "ESC" -NoNewline -ForegroundColor Red
-    Write-Host $rightBracket -NoNewline -ForegroundColor DarkGray
-    Write-Host " Back/Exit" -NoNewline -ForegroundColor White
+    Write-Host "▼" -NoNewline -ForegroundColor Yellow
+    Write-Host " Nav  " -NoNewline -ForegroundColor White
+    Write-Host "[ESC]" -NoNewline -ForegroundColor White -BackgroundColor Red
+    Write-Host " Exit  " -NoNewline -ForegroundColor White
+    Write-Host "[.]" -NoNewline -ForegroundColor Black -BackgroundColor Cyan
+    Write-Host " Command" -NoNewline -ForegroundColor White
     
     # Right-align version and author
-    $rightText = "v$Version $pipeChar $Author"
-    $spacesNeeded = 76 - 37 - $rightText.Length
+    $rightText = "v$Version │ $Author"
+    $spacesNeeded = 68 - 31 - $rightText.Length
     if ($spacesNeeded -gt 0) {
         Write-Host (" " * $spacesNeeded) -NoNewline
     }
-    Write-Host $rightText -ForegroundColor DarkGray
+    Write-Host $rightText -NoNewline -ForegroundColor DarkGray
+    Write-Host " ║" -ForegroundColor DarkGray
+    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor DarkGray
 }
 
 function Manage-DeepFreeze {
@@ -518,12 +854,170 @@ function Manage-DeepFreeze {
     }
 }
 
+function Show-DebugMenu {
+    param(
+        [string]$Version,
+        [string]$ScriptRoot
+    )
+    
+    # Get process information
+    $procInfo = Get-ProcessInfo
+    
+    Clear-Host
+    Write-Host ""
+    Write-Host "  ╔═══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
+    Write-Host "  ║" -NoNewline -ForegroundColor Yellow
+    Write-Host "                          🐛 DEBUG MENU                            " -NoNewline -ForegroundColor Yellow
+    Write-Host "║" -ForegroundColor Yellow
+    Write-Host "  ╚═══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  ┌─────────────────────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "📊 Version: " -NoNewline -ForegroundColor White
+    Write-Host "v$Version" -NoNewline -ForegroundColor Cyan
+    $padding = 68 - 13 - $Version.Length
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkGray
+    Write-Host "  │ " -NoNewline -ForegroundColor DarkGray
+    Write-Host "📋 Path: " -NoNewline -ForegroundColor White
+    $shortPath = $ScriptRoot.Replace($env:USERPROFILE, "~")
+    Write-Host "$shortPath" -NoNewline -ForegroundColor Gray
+    $padding = 68 - 10 - $shortPath.Length
+    if ($padding -lt 0) { $padding = 1 }
+    Write-Host (" " * $padding) -NoNewline
+    Write-Host "│" -ForegroundColor DarkGray
+    Write-Host "  └─────────────────────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  📊 Process Information:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "    💻 CPU Time:     " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($procInfo.CPU)" -ForegroundColor White
+    Write-Host "    💾 Memory Usage: " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($procInfo.Memory)" -ForegroundColor White
+    Write-Host "    🧵 Threads:      " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($procInfo.Threads)" -ForegroundColor White
+    Write-Host "    🔗 Handles:      " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($procInfo.Handles)" -ForegroundColor White
+    Write-Host "    ⏰ Start Time:   " -NoNewline -ForegroundColor Cyan
+    Write-Host "$($procInfo.StartTime)" -ForegroundColor White
+    Write-Host "    🆔 Process ID:   " -NoNewline -ForegroundColor Cyan
+    Write-Host "$PID" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  🔧 Debug Options:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "    1. 🔄 Check for Updates Manually" -ForegroundColor White
+    Write-Host "    2. 📝 View Configuration Files" -ForegroundColor White
+    Write-Host "    3. 📊 System Diagnostics" -ForegroundColor White
+    Write-Host "    4. 🐛 Toggle Debug Mode" -ForegroundColor White
+    Write-Host "    5. ❌ Exit Debug Menu" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  Select option (1-5): " -NoNewline -ForegroundColor Yellow
+    
+    $choice = [Console]::ReadKey($true)
+    
+    switch ($choice.KeyChar) {
+        '1' {
+            # Manual update check
+            Clear-Host
+            Write-Host ""
+            Write-Host "  🔄 Checking for updates..." -ForegroundColor Yellow
+            Write-Host ""
+            
+            $updateCheckScript = Join-Path $ScriptRoot "sfu-tools\Check-Update.ps1"
+            if (Test-Path $updateCheckScript) {
+                $updateInfo = & $updateCheckScript -CurrentVersion $Version
+                
+                if ($updateInfo -and $updateInfo.UpdateAvailable) {
+                    Write-Host "  ✅ Update available!" -ForegroundColor Green
+                    Write-Host "     Current: v$($updateInfo.CurrentVersion)" -ForegroundColor White
+                    Write-Host "     Latest:  v$($updateInfo.RemoteVersion)" -ForegroundColor Cyan
+                    Write-Host ""
+                    $confirm = Read-Host "  Install update? (Y/N)"
+                    if ($confirm -eq 'Y') {
+                        $installScript = Join-Path $ScriptRoot "sfu-tools\Install-Update.ps1"
+                        if (Test-Path $installScript) {
+                            & $installScript -DownloadUrl $updateInfo.DownloadUrl -CurrentVersion $updateInfo.CurrentVersion -NewVersion $updateInfo.RemoteVersion
+                            Exit
+                        }
+                    }
+                } else {
+                    Write-Host "  ✅ You are running the latest version!" -ForegroundColor Green
+                }
+            } else {
+                Write-Host "  ❌ Update check script not found" -ForegroundColor Red
+            }
+            
+            Write-Host ""
+            Read-Host "  Press Enter to continue"
+        }
+        '2' {
+            # View config files
+            Clear-Host
+            Write-Host ""
+            Write-Host "  📝 Configuration Files:" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "  config.json:" -ForegroundColor Cyan
+            Get-Content (Join-Path $ScriptRoot "sfu-tools\config.json") | Write-Host -ForegroundColor Gray
+            Write-Host ""
+            Read-Host "  Press Enter to continue"
+        }
+        '3' {
+            # System diagnostics
+            Clear-Host
+            Write-Host ""
+            Write-Host "  📊 System Diagnostics:" -ForegroundColor Yellow
+            Write-Host ""
+            $sysInfo = Get-SysInfo
+            Write-Host "  Hostname:    $($sysInfo.Name)" -ForegroundColor White
+            Write-Host "  Model:       $($sysInfo.Model)" -ForegroundColor White
+            Write-Host "  OS:          $($sysInfo.OS)" -ForegroundColor White
+            Write-Host "  Uptime:      $($sysInfo.Uptime)" -ForegroundColor White
+            Write-Host "  RAM:         $($sysInfo.RAM)" -ForegroundColor White
+            Write-Host "  Network:     $($sysInfo.Net)" -ForegroundColor White
+            Write-Host "  Deep Freeze: $($sysInfo.DF)" -ForegroundColor White
+            Write-Host ""
+            Read-Host "  Press Enter to continue"
+        }
+        '4' {
+            # Toggle debug mode
+            $script:DebugMode = -not $script:DebugMode
+            $status = if ($script:DebugMode) { "ENABLED" } else { "DISABLED" }
+            Clear-Host
+            Write-Host ""
+            Write-Host "  🐛 Debug Mode: $status" -ForegroundColor $(if ($script:DebugMode) { "Green" } else { "Red" })
+            Write-Host ""
+            Start-Sleep -Seconds 1
+        }
+        '5' {
+            # Exit debug menu
+            return
+        }
+        default {
+            # Invalid choice
+            Clear-Host
+            Write-Host ""
+            Write-Host "  ❌ Invalid option" -ForegroundColor Red
+            Start-Sleep -Seconds 1
+        }
+    }
+}
+
 # --- Main Logic ---
 
 # 1. Load Config
 if (-not (Test-Path $ConfigPath)) {
     $errorMsg = "The configuration file could not be found at:`n  $ConfigPath`n`n  Please ensure the config.json file exists in the sfu-tools directory."
     Show-BSOD -ErrorTitle "CONFIG_FILE_NOT_FOUND" -ErrorMessage $errorMsg -ErrorCode "0xC0000001"
+}
+
+# Load Icons
+$script:Icons = $null
+if (Test-Path $IconsPath) {
+    try {
+        $script:Icons = Get-Content $IconsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        Write-Warning "Could not load icons file: $($_.Exception.Message)"
+    }
 }
 
 try {
@@ -543,6 +1037,14 @@ try {
     $Categories = $json.categories
     $Version = $json.meta.version
     $Author = if ($json.meta.author) { $json.meta.author } else { "Technical Assistants" }
+    
+    # Load slash commands
+    $script:SlashCommands = @{}
+    if ($json.commands) {
+        foreach ($cmdName in $json.commands.PSObject.Properties.Name) {
+            $script:SlashCommands[$cmdName] = $json.commands.$cmdName
+        }
+    }
     
     # Build hotkey map for quick access
     $HotkeyMap = @{}
@@ -788,6 +1290,52 @@ while ($running) {
         default {
             # Check for hotkeys
             $keyChar = $key.KeyChar.ToString().ToUpper()
+            
+            # Command input with . key (Minecraft style)
+            if ($key.KeyChar -eq '.') {
+                # Show command prompt at bottom
+                $windowHeight = 35
+                [Console]::SetCursorPosition(0, $windowHeight - 1)
+                Write-Host "  ❯ " -NoNewline -ForegroundColor Yellow
+                Write-Host "/" -NoNewline -ForegroundColor Cyan
+                
+                # Read command input
+                $cmdInput = ""
+                $inputRunning = $true
+                
+                while ($inputRunning) {
+                    if ([Console]::KeyAvailable) {
+                        $inputKey = [Console]::ReadKey($true)
+                        
+                        if ($inputKey.Key -eq "Enter") {
+                            $inputRunning = $false
+                        } elseif ($inputKey.Key -eq "Escape") {
+                            $cmdInput = ""
+                            $inputRunning = $false
+                        } elseif ($inputKey.Key -eq "Backspace" -and $cmdInput.Length -gt 0) {
+                            $cmdInput = $cmdInput.Substring(0, $cmdInput.Length - 1)
+                            [Console]::SetCursorPosition(5 + $cmdInput.Length, $windowHeight - 1)
+                            Write-Host " " -NoNewline
+                            [Console]::SetCursorPosition(5 + $cmdInput.Length, $windowHeight - 1)
+                        } elseif ($inputKey.KeyChar -match '[a-zA-Z0-9]') {
+                            $cmdInput += $inputKey.KeyChar
+                            Write-Host $inputKey.KeyChar -NoNewline -ForegroundColor White
+                        }
+                    }
+                    Start-Sleep -Milliseconds 50
+                }
+                
+                # Execute command if not empty
+                if ($cmdInput.Trim().Length -gt 0) {
+                    $result = Invoke-SlashCommand -CommandName $cmdInput -Commands $script:SlashCommands -Version $Version -Author $Author -ScriptRoot $ScriptRoot
+                    if ($result -eq "EXIT") {
+                        $running = $false
+                    }
+                }
+                
+                $needsFullRedraw = $true
+                continue
+            }
             
             # Deep Freeze toggle hotkey
             if ($keyChar -eq "D") {
