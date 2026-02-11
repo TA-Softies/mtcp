@@ -1,12 +1,14 @@
 <#
     .SYNOPSIS
-    SFU-TOOLS MASTER INSTALLER (Memory-Safe Edition)
-    - Auto-Detects Firmware/Drivers
-    - CLEAN INSTALLS Libraries (Deletes old junk to fix Memory Errors)
-    - Supports Factory Reset (Nuke)
+    SFU-TOOLS MASTER INSTALLER (External Boot File Edition)
+    - Copies boot.py from source (RAM Fix)
+    - Copies code.py from source
+    - Installs Firmware & Libraries
+    - Copies ROOT folder structure correctly
 #>
 param (
     [string]$CodeFile     = "code.py",
+    [string]$BootFile     = "boot.py",
     [string]$SourceFolder = "ROOT",
     [string]$FirmwareDir  = "firmware",
     [string]$NukeFile     = "flash_nuke.uf2"
@@ -17,23 +19,13 @@ $ScriptPath = $PSScriptRoot
 $RootPath   = Join-Path $ScriptPath $SourceFolder
 $FirmwarePath = Join-Path $ScriptPath $FirmwareDir
 $NukePath   = Join-Path $FirmwarePath $NukeFile
+$BootPath   = Join-Path $ScriptPath $BootFile
 
-# --- HELPER: LOGGING ---
-function Exec-Cmd {
-    param([string]$Message, [scriptblock]$Action)
-    Write-Host " [EXEC] $Message" -ForegroundColor DarkGray
-    & $Action
-}
-
+# --- PROGRESS BAR COPY FUNCTION ---
 function Copy-WithProgress {
-    param(
-        [string]$Source,
-        [string]$Destination,
-        [string]$Activity = "Copying Files"
-    )
+    param([string]$Source, [string]$Destination, [string]$Activity = "Copying Files")
     
     if (Test-Path -LiteralPath $Source -PathType Container) {
-        # Directory copy with progress
         $files = Get-ChildItem -Path $Source -Recurse -File
         $totalFiles = $files.Count
         $counter = 0
@@ -41,28 +33,23 @@ function Copy-WithProgress {
         foreach ($file in $files) {
             $counter++
             $relativePath = $file.FullName.Substring($Source.Length)
+            if ($relativePath.StartsWith("\")) { $relativePath = $relativePath.Substring(1) }
+            
             $destPath = Join-Path $Destination $relativePath
             $destDir = Split-Path $destPath -Parent
             
-            if (-not (Test-Path $destDir)) {
-                New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            }
+            if (-not (Test-Path $destDir)) { New-Item -Path $destDir -ItemType Directory -Force | Out-Null }
             
-            $percentComplete = [math]::Round(($counter / $totalFiles) * 100)
-            Write-Progress -Activity $Activity -Status "$counter of $totalFiles files" -CurrentOperation $file.Name -PercentComplete $percentComplete
-            
+            $percent = [math]::Round(($counter / $totalFiles) * 100)
+            Write-Progress -Activity $Activity -Status "Copying $relativePath" -PercentComplete $percent
             Copy-Item -Path $file.FullName -Destination $destPath -Force
         }
-        Write-Progress -Activity $Activity -Completed
     } else {
-        # Single file copy with progress
-        $fileSize = (Get-Item $Source).Length
         Write-Progress -Activity $Activity -Status "Copying $(Split-Path $Source -Leaf)" -PercentComplete 0
         Copy-Item -Path $Source -Destination $Destination -Force
-        Write-Progress -Activity $Activity -Status "Copying $(Split-Path $Source -Leaf)" -PercentComplete 100
-        Start-Sleep -Milliseconds 500
-        Write-Progress -Activity $Activity -Completed
+        Write-Progress -Activity $Activity -Status "Done" -PercentComplete 100
     }
+    Write-Progress -Activity $Activity -Completed
 }
 
 function Show-Header {
@@ -78,13 +65,15 @@ Show-Header
 # PHASE 1: SCANNING
 # ==========================================
 if (-not (Test-Path $FirmwarePath)) { Write-Error "Firmware folder missing!"; exit }
+if (-not (Test-Path $BootPath)) { Write-Error "File 'boot.py' is missing! Please create it."; exit }
+if (-not (Test-Path $RootPath)) { Write-Error "Folder 'ROOT' is missing!"; exit }
 
 Write-Host " Scanning firmware..." -ForegroundColor Yellow
+
 $allZips = Get-ChildItem -Path $FirmwarePath -Filter "*.zip"
 $allUf2s = Get-ChildItem -Path $FirmwarePath -Filter "*.uf2"
 $validPairs = @{}
 
-# Pair Logic
 foreach ($zip in $allZips) {
     if ($zip.Name -match "bundle-(\d+)\.x") {
         $ver = [int]$matches[1]
@@ -95,13 +84,10 @@ foreach ($zip in $allZips) {
 foreach ($uf2 in $allUf2s) {
     if ($uf2.Name -notmatch "nuke" -and $uf2.Name -match "[-_](\d+)\.\d+\.\d+") {
         $ver = [int]$matches[1]
-        if ($validPairs.ContainsKey($ver)) {
-            $validPairs[$ver]["Uf2"] = $uf2 # Simple take-last logic
-        }
+        if ($validPairs.ContainsKey($ver)) { $validPairs[$ver]["Uf2"] = $uf2 }
     }
 }
 
-# Select Best Pair
 $sortedVersions = $validPairs.Keys | Sort-Object -Descending
 $selected = $null
 foreach ($v in $sortedVersions) {
@@ -129,8 +115,6 @@ if ($menuChoice -eq "Q") { exit }
 # ==========================================
 # PHASE 3: EXECUTION
 # ==========================================
-
-# --- MODE: NUKE ---
 if ($menuChoice -eq "2") {
     Write-Host "`n [MODE] FORCE FACTORY RESET" -ForegroundColor Red
     $bootloader = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }
@@ -152,7 +136,6 @@ if ($menuChoice -eq "2") {
     $targetDrive = Get-Volume | Where-Object { $_.FileSystemLabel -eq "RPI-RP2" }
     $installType = "FULL"
 }
-# --- MODE: SMART ---
 elseif ($menuChoice -eq "1") {
     Write-Host " > Waiting for device..."
     while ($true) {
@@ -165,7 +148,6 @@ elseif ($menuChoice -eq "1") {
         Start-Sleep 1
     }
 }
-# --- MODE: UPDATE ---
 elseif ($menuChoice -eq "3") {
     $targetDrive = Get-Volume | Where-Object { $_.FileSystemLabel -eq "CIRCUITPY" }
     if (-not $targetDrive) { Write-Error "Device not found."; exit }
@@ -180,8 +162,7 @@ $dest = "$($targetDrive.DriveLetter):"
 # 1. FIRMWARE
 if ($installType -eq "FULL") {
     Write-Host "`n [STEP 1] FLASHING FIRMWARE" -ForegroundColor Cyan
-    Write-Host " [EXEC] Copying Firmware..." -ForegroundColor DarkGray
-    Copy-WithProgress -Source $selected["Uf2"].FullName -Destination $dest -Activity "Flashing CircuitPython Firmware"
+    Copy-WithProgress -Source $selected["Uf2"].FullName -Destination $dest -Activity "Flashing Firmware"
     
     Write-Host " > Rebooting..."
     for ($i=0; $i -lt 30; $i++) { 
@@ -190,53 +171,52 @@ if ($installType -eq "FULL") {
             $targetDrive = $c; break 
         }
     }
+    if (-not $targetDrive) { Write-Error "Reboot Failed."; exit }
     $dest = "$($targetDrive.DriveLetter):"
 }
 
-# 2. LIBRARIES (CRITICAL FIX FOR MEMORY ERROR)
+# 2. LIBRARIES
 if ($installType -eq "FULL" -or $installType -eq "UPDATE") {
     Write-Host "`n [STEP 2] INSTALLING LIBRARIES" -ForegroundColor Cyan
-    
-    # Force Clean Old Libs
     $libDir = Join-Path $dest "lib"
-    if (Test-Path $libDir) {
-        Exec-Cmd "Deleting old 'lib' folder (Clean Install)" { Remove-Item $libDir -Recurse -Force }
-    }
+    if (Test-Path $libDir) { Remove-Item $libDir -Recurse -Force }
     New-Item -Path $libDir -ItemType Directory | Out-Null
     
-    # Extract & Install New Libs
     $temp = Join-Path $env:TEMP "sfu_install_$(Get-Random)"
-    Write-Host " [EXEC] Extracting Bundle..." -ForegroundColor DarkGray
-    Write-Progress -Activity "Extracting Library Bundle" -Status "Extracting archive..." -PercentComplete 0
     Expand-Archive -Path $selected["Zip"].FullName -DestinationPath $temp -Force
-    Write-Progress -Activity "Extracting Library Bundle" -Status "Complete" -PercentComplete 100
-    Start-Sleep -Milliseconds 500
-    Write-Progress -Activity "Extracting Library Bundle" -Completed
-    
     $libSrc = Get-ChildItem -Path $temp -Recurse -Directory | Where-Object { $_.Name -eq "adafruit_hid" } | Select-Object -First 1
     
     if ($libSrc) {
-        Write-Host " [EXEC] Installing adafruit_hid (MPY version)" -ForegroundColor DarkGray
-        Copy-WithProgress -Source $libSrc.FullName -Destination $libDir -Activity "Installing HID Library"
+        Write-Host " [EXEC] Installing HID Library..." -ForegroundColor DarkGray
+        Copy-WithProgress -Source $libSrc.FullName -Destination $libDir -Activity "Installing Libraries"
     }
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-# 3. PAYLOAD
+# 3. PAYLOAD & BOOT CONFIG
 Write-Host "`n [STEP 3] SYNCING PAYLOAD" -ForegroundColor Cyan
-Write-Host " [EXEC] Updating code.py" -ForegroundColor DarkGray
+
+# A. COPY BOOT.PY (Source -> Dest)
+Write-Host " [EXEC] Installing boot.py..." -ForegroundColor DarkGray
+Copy-WithProgress -Source $BootPath -Destination (Join-Path $dest "boot.py") -Activity "Installing Boot Script"
+
+# B. COPY CODE.PY
+Write-Host " [EXEC] Updating code.py..." -ForegroundColor DarkGray
 Copy-WithProgress -Source (Join-Path $ScriptPath $CodeFile) -Destination (Join-Path $dest "code.py") -Activity "Updating Main Script"
 
+# C. COPY ROOT FOLDER (Corrected Logic)
+# If we run 'Copy-Item ROOT D:\', it creates D:\ROOT.
+# We ensure the old one is gone first.
 $targetRoot = Join-Path $dest "ROOT"
 if (Test-Path $targetRoot) { 
-    Write-Host " [EXEC] Cleaning old ROOT" -ForegroundColor DarkGray
-    Write-Progress -Activity "Cleaning Old Files" -Status "Removing old ROOT folder" -PercentComplete 50
+    Write-Host " [EXEC] Cleaning old ROOT..." -ForegroundColor DarkGray
     Remove-Item $targetRoot -Recurse -Force
-    Write-Progress -Activity "Cleaning Old Files" -Completed
 }
-Write-Host " [EXEC] Copying new ROOT" -ForegroundColor DarkGray
-Copy-WithProgress -Source $RootPath -Destination $dest -Activity "Installing ROOT Folder"
+
+Write-Host " [EXEC] Installing ROOT folder..." -ForegroundColor DarkGray
+# Copying the FOLDER $RootPath to the DRIVE ROOT $dest will result in D:\ROOT
+Copy-Item -Path $RootPath -Destination $dest -Recurse -Force
 
 Write-Host "`n [SUCCESS] Device Ready." -ForegroundColor Green
+Write-Host " Unplug and plug in to test."
 Start-Sleep 2
-pause

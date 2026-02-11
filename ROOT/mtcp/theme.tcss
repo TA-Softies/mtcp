@@ -1,0 +1,603 @@
+/* MTCP - Multi-Tool Control Panel - Textual CSS Theme */
+/* Dark theme with cool cyan/blue accents */
+
+Screen {
+    background: #111111;
+}
+
+/* ── Header Banner ── */
+
+#banner {
+    height: auto;
+    background: #1a1a2e;
+    border: heavy #00d4ff;
+    margin: 1 2 0 2;
+    padding: 0 1;
+}
+
+#banner-art {
+    text-align: center;
+    color: #00d4ff;
+    text-style: bold;
+}
+
+#banner-title {
+    text-align: center;
+    color: #888888;
+    margin-top: 0;
+}
+
+#banner-subtitle {
+    text-align: center;
+    color: #0090aa;
+    margin-bottom: 0;
+}
+
+/* ── System Info Panel ── */
+
+/* Summary panel (always visible) */
+#sysinfo-summary {
+    height: auto;
+    margin: 0 2;
+    padding: 0 1;
+    background: #141414;
+    border: round #0090aa;
+}
+
+#sysinfo-summary-content {
+    padding: 0;
+}
+
+/* Collapsible for more details */
+#sysinfo-collapsible {
+    margin: 0 2 0 2;
+    padding: 0;
+    background: #1a1a1a;
+    border: none;
+}
+
+#sysinfo-collapsible > CollapsibleTitle {
+    color: #00d4ff;
+    background: #1a1a1a;
+    padding: 0 1;
+}
+
+#sysinfo-collapsible > Contents {
+    padding: 0 1;
+    height: auto;
+    max-height: 18;
+    background: #141414;
+    border: solid #333;
+}
+
+#sysinfo-content {
+    padding: 0;
+}
+
+/* Legacy selectors */
+#quick-info-bar {
+    display: none;
+}
+
+/* Legacy sysinfo-panel for backwards compatibility */
+#sysinfo-panel {
+    height: auto;
+    max-height: 20;
+    background: #141414;
+    border: round #0090aa;
+    margin: 1 2 0 2;
+    padding: 0 1;
+}
+
+.sysinfo-row {
+    height: 1;
+    layout: horizontal;
+}
+
+.sysinfo-label {
+    width: auto;
+    min-width: 12;
+    color: #777777;
+    text-style: bold;
+}
+
+.sysinfo-value {
+    width: 1fr;
+    color: #e0e0e0;
+}
+
+.sysinfo-icon {
+    width: 3;
+    color: #00d4ff;
+}
+
+#df-status-frozen {
+    background: #00bcd4;
+    color: #111111;
+    text-style: bold;
+    width: auto;
+    padding: 0 1;
+}
+
+#df-status-thawed {
+    background: #ff4444;
+    color: #ffffff;
+    text-style: bold;
+    width: auto;
+    padding: 0 1;
+}
+
+#df-status-unknown {
+    background: #555555;
+    color: #cccccc;
+    width: auto;
+    padding: 0 1;
+}
+
+#net-online {
+    color: #4caf50;
+    text-style: bold;
+}
+
+#net-offline {
+    color: #ff4444;
+    text-style: bold;
+}
+
+/* ── Live Monitoring Panel ── */
+
+#monitor-panel {
+    height: 3;
+    background: #141414;
+    border: round #0090aa;
+    margin: 1 2 0 2;
+    padding: 0 1;
+}
+
+#monitor-row {
+    height: 1;
+    width: 100%;
+    align: center middle;
+}
+
+.mon-label {
+    width: auto;
+    color: #00d4ff;
+    text-style: bold;
+    padding: 0 1 0 0;
+}
+
+.mon-val {
+    width: auto;
+    color: #e0e0e0;
+    padding: 0 0 0 1;
+}
+
+.mon-val-dim {
+    width: auto;
+    color: #666666;
+    padding: 0 0 0 1;
+}
+
+.mon-sep {
+    width: auto;
+    color: #333333;
+    padding: 0 1;
+}
+
+#cpu-bar,
+#mem-bar,
+#disk-bar {
+    width: 8;
+    height: 1;
+}
+
+ProgressBar {
+    height: 1;
+    padding: 0;
+}
+
+ProgressBar Bar {
+    width: 1fr;
+    color: #00d4ff;
+}
+
+ProgressBar PercentageStatus {
+    display: none;
+}
+
+/* ── Breadcrumb Bar ── */
+
+#breadcrumb-bar {
+    height: auto;
+    background: #141414;
+    border: round #333333;
+    margin: 1 2 0 2;
+    padding: 0 1;
+}
+
+#breadcrumb-text {
+    color: #e0e0e0;
+    text-style: bold;
+}
+
+#breadcrumb-desc {
+    color: #0090aa;
+    text-style: italic;
+}
+
+/* ── Hotkey Bar (bottom) ── */
+
+#hotkey-bar {
+    height: 1;
+    dock: bottom;
+    background: #1a1a1a;
+    margin: 0 2;
+    padding: 0 1;
+}
+
+#footer-nav {
+    width: 1fr;
+    color: #cccccc;
+}
+
+#footer-version {
+    width: auto;
+    color: #555555;
+    text-align: right;
+}
+
+/* ── Main Menu / Tool List ── */
+
+#menu-container {
+    margin: 1 2;
+    height: 1fr;
+    min-height: 8;
+    background: #141414;
+    border: round #00d4ff;
+    padding: 0 1;
+}
+
+#tool-list {
+    height: 1fr;
+    scrollbar-size-vertical: 1;
+}
+
+#tool-list > .option-list--option-highlighted {
+    background: #00d4ff;
+    color: #111111;
+    text-style: bold;
+}
+
+#tool-list > .option-list--option {
+    padding: 0 1;
+}
+
+/* ── Command Palette / Input ── */
+
+#command-input-container {
+    dock: bottom;
+    height: 3;
+    background: #1a1a2e;
+    border: heavy #00d4ff;
+    margin: 0 2 2 2;
+    padding: 0 1;
+    display: none;
+}
+
+#command-input-container Horizontal {
+    width: 100%;
+    height: 100%;
+}
+
+#command-input {
+    width: 1fr;
+    height: 1;
+    border: none;
+    background: transparent;
+}
+
+#command-input:focus {
+    border: none;
+}
+
+#command-label {
+    width: auto;
+    color: #00d4ff;
+    text-style: bold;
+    padding: 0;
+    height: 1;
+}
+
+/* ── Tool Output Modal ── */
+
+ToolOutputScreen {
+    align: center middle;
+}
+
+#output-dialog {
+    width: 80%;
+    height: 80%;
+    background: #141414;
+    border: heavy #00d4ff;
+    padding: 1 2;
+}
+
+#output-title {
+    text-style: bold;
+    color: #00d4ff;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#output-log {
+    height: 1fr;
+    border: round #333333;
+    padding: 0 1;
+    overflow-y: auto;
+}
+
+#output-footer {
+    height: 1;
+    text-align: center;
+    color: #555555;
+    margin-top: 1;
+}
+
+/* ── Help Screen ── */
+
+HelpScreen {
+    align: center middle;
+}
+
+#help-dialog {
+    width: 80%;
+    height: 80%;
+    background: #141414;
+    border: heavy #00d4ff;
+    padding: 1 2;
+}
+
+#help-title {
+    text-style: bold;
+    color: #00d4ff;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#help-content {
+    height: 1fr;
+    overflow-y: auto;
+    padding: 0 1;
+}
+
+.help-section-title {
+    color: #00d4ff;
+    text-style: bold;
+    margin-top: 1;
+}
+
+.help-cmd-name {
+    color: #00bcd4;
+    width: 20;
+}
+
+.help-cmd-desc {
+    color: #888888;
+}
+
+/* ── Credits Screen ── */
+
+CreditsScreen {
+    align: center middle;
+}
+
+#credits-dialog {
+    width: 70%;
+    height: 70%;
+    background: #141414;
+    border: heavy #00d4ff;
+    padding: 1 2;
+}
+
+#credits-title {
+    text-style: bold;
+    color: #00d4ff;
+    text-align: center;
+}
+
+#credits-content {
+    height: 1fr;
+    text-align: center;
+    padding: 1;
+    overflow-y: auto;
+}
+
+.credits-label {
+    color: #00bcd4;
+    text-style: bold;
+    margin-top: 1;
+}
+
+.credits-value {
+    color: #e0e0e0;
+}
+
+/* ── Debug Screen ── */
+
+DebugScreen {
+    align: center middle;
+}
+
+#debug-dialog {
+    width: 80%;
+    height: 85%;
+    background: #141414;
+    border: heavy #ff9800;
+    padding: 1 2;
+}
+
+#debug-title {
+    text-style: bold;
+    color: #ff9800;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#debug-content {
+    height: 1fr;
+    overflow-y: auto;
+    padding: 0 1;
+}
+
+.debug-section {
+    margin-bottom: 1;
+}
+
+.debug-label {
+    color: #00bcd4;
+    width: 20;
+}
+
+.debug-value {
+    color: #e0e0e0;
+}
+
+/* ── Update Notification Screen ── */
+
+UpdateScreen {
+    align: center middle;
+}
+
+#update-dialog {
+    width: 60%;
+    height: auto;
+    max-height: 70%;
+    background: #141414;
+    border: heavy #4caf50;
+    padding: 2;
+}
+
+#update-title {
+    text-style: bold;
+    color: #4caf50;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#update-content {
+    padding: 1;
+}
+
+.update-version-label {
+    color: #888888;
+}
+
+.update-version-current {
+    color: #e0e0e0;
+}
+
+.update-version-new {
+    color: #4caf50;
+    text-style: bold;
+}
+
+/* ── Confirm Exit Dialog ── */
+
+ExitConfirmScreen {
+    align: center middle;
+}
+
+#exit-dialog {
+    width: 50%;
+    height: auto;
+    background: #141414;
+    border: heavy #ff4444;
+    padding: 2;
+}
+
+#exit-title {
+    text-style: bold;
+    color: #ff4444;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#exit-buttons {
+    layout: horizontal;
+    height: 3;
+    align: center middle;
+    margin-top: 1;
+}
+
+#exit-buttons Button {
+    margin: 0 2;
+    min-width: 16;
+}
+
+/* ── Loading Indicator ── */
+
+LoadingIndicator {
+    color: #00d4ff;
+}
+
+/* ── Deep Freeze Confirm Screen ── */
+
+DeepFreezeScreen {
+    align: center middle;
+}
+
+#df-dialog {
+    width: 60%;
+    height: auto;
+    background: #141414;
+    border: heavy #00bcd4;
+    padding: 2;
+}
+
+#df-title {
+    text-style: bold;
+    color: #00bcd4;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+#df-content {
+    padding: 1;
+}
+
+/* ── General Utilities ── */
+
+.hidden {
+    display: none;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-accent {
+    color: #00d4ff;
+}
+
+.text-muted {
+    color: #888888;
+}
+
+.text-error {
+    color: #ff4444;
+}
+
+.text-success {
+    color: #4caf50;
+}
+
+.bold {
+    text-style: bold;
+}
+
+.separator {
+    height: 1;
+    border-bottom: solid #333333;
+    margin: 0;
+}

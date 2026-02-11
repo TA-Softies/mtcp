@@ -1,99 +1,97 @@
 # MTCP - Multi-Tool Control Panel
 ## by Technical Assistants
 
-A professional PowerShell-based system administration toolkit designed for IT professionals managing Windows environments. Features an intuitive menu-driven interface, system monitoring, and automated maintenance tools.
+A modern Python Textual TUI for Windows system administration. Features a rich terminal interface with live system monitoring, categorized tools, and Deep Freeze integration.
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue)
+![Version](https://img.shields.io/badge/version-0.3.1-blue)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## 🚀 Quick Start
 
-1. **Download**: Clone or download this repository
-   ```bash
-   git clone https://github.com/TA-Softies/mtcp.git
-   ```
+### Option 1: Download Release (Recommended)
+```powershell
+# Download MTCP.exe from GitHub Releases
+# Run as Administrator
+```
 
-2. **Run**: Navigate to the ROOT folder and run as Administrator
-   ```
-   Right-click Start_Panel.bat → Run as Administrator
-   ```
+### Option 2: Run from Source
+```powershell
+# Clone repository
+git clone https://github.com/TA-Softies/mtcp.git
+cd mtcp/ROOT
 
-3. **Navigate**: Use arrow keys to browse tools, Enter to execute, ESC to go back
+# Run launcher (handles everything automatically)
+.\Launch.ps1
+```
+
+The launcher will:
+1. Check for `MTCP.exe` → run directly
+2. Download latest release from GitHub
+3. Fall back to Python mode (creates venv, installs dependencies)
 
 ## ✨ Key Features
 
-### 📊 Real-Time System Dashboard
-- Computer name with domain information
-- System model and manufacturer
-- Windows version and build number
+### 📊 Real-Time Dashboard
+- System info: hostname, domain, model, Windows version
+- Network status: WiFi/Ethernet, IP address, connectivity
+- Deep Freeze status: FROZEN/THAWED/Not Installed
 - Boot time and uptime tracking
-- Network status (WiFi/Ethernet, IP address, connectivity)
-- Hardware information (motherboard, RAM)
-- Deep Freeze status monitoring
+
+### 📈 Live Monitoring Panel
+- CPU usage percentage
+- RAM usage (used/total GB)
+- Disk usage (used/total GB)
+- Network connectivity status
 
 ### 🛠️ Tool Categories
 
-#### Troubleshooting
-- **System**: SFC, DISM, Event Viewer, System Restore
-- **Disk**: Check Disk, Disk Cleanup, Defragmentation
-- **Network**: IP configuration, DNS flush, connectivity diagnostics
-
-#### Maintenance
-- Windows Update management
-- Disk cleanup and optimization
-- System file integrity checks
-- Registry maintenance
-
-#### System Tools
-- Advanced system utilities
-- Custom PowerShell scripts
-- Third-party tool integration
-
-### 🎨 User Interface
-- Professional Unicode ASCII banner
-- Color-coded categories (Green) and subcategories (Light Green)
-- Highlighted selection with arrow key navigation
-- Dynamic breadcrumb navigation
-- Context-sensitive tool descriptions
-- Optimized screen rendering (no full refresh on navigation)
+| Category | Tools |
+|----------|-------|
+| **Troubleshooting** | SFC, DISM, Event Viewer, Check Disk, Network diagnostics |
+| **Maintenance** | Disk cleanup, Windows Update, System optimization |
+| **System Tools** | Advanced utilities, PowerShell scripts |
 
 ### ❄️ Deep Freeze Integration
-- Automatic detection of Deep Freeze installations
-- Real-time status display (FROZEN/THAWED)
-- Quick toggle with hotkey [D]
+- Automatic status detection via `DFC.exe`
+- Quick toggle with hotkey **[D]**
+- Supports FROZEN ↔ THAWED states
 - Password-protected operations
-- Supports all DFC.exe commands
 
 ### 🔄 Auto-Update System
-- Background update checks on startup
-- Version comparison with GitHub repository
-- One-click update installation [U]
-- Automatic backup before updates
-- Rollback on failure
-- Zero-downtime updates with auto-restart
+- Downloads from GitHub Releases
+- Standalone `.exe` distribution
+- Background update checks
 
 ## 📋 System Requirements
 
 - **OS**: Windows 10 or Windows 11
-- **PowerShell**: 5.1 or higher (included with Windows)
+- **Python**: 3.10 or higher (auto-installed by launcher if missing)
 - **Privileges**: Administrator rights required
-- **Internet**: Optional (required for updates only)
-- **Screen**: Minimum 76x35 character console window
+- **Internet**: Optional (required for updates/release download)
 
 ## 📦 Installation
 
-### Standard Installation
-1. Download the latest release from GitHub
-2. Extract to your desired location (e.g., `C:\Tools\MTCP\`)
-3. Run `ROOT\Start_Panel.bat` as Administrator
+### Standalone Executable
+1. Download `MTCP.exe` from [GitHub Releases](https://github.com/TA-Softies/mtcp/releases)
+2. Place in `ROOT/` folder alongside `sfu-tools/`
+3. Run as Administrator
 
-### Portable Installation
-- No installation needed - runs from any folder
-- Can be placed on USB drive for portable use
-- No registry modifications
-- No system file changes
+### From Source
+```powershell
+cd ROOT
+.\Launch.ps1  # Handles venv creation and dependencies
+```
+
+### Manual Python Setup
+```powershell
+cd ROOT
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r mtcp/requirements.txt
+python -m mtcp
+```
 
 ## 🎮 Usage
 
@@ -102,11 +100,23 @@ A professional PowerShell-based system administration toolkit designed for IT pr
 | Key | Action |
 |-----|--------|
 | `↑` / `↓` | Navigate menu items |
-| `Enter` | Select/Execute |
-| `ESC` | Go back or exit |
+| `Enter` / `→` | Select/Execute |
+| `Esc` / `←` | Go back |
 | `W` | Quick wallpaper change |
 | `D` | Toggle Deep Freeze |
-| `U` | Install update (when available) |
+| `/` | Command mode |
+| `F1` | Help screen |
+| `Q` / `E` | Exit |
+
+### Commands (Press `/`)
+
+| Command | Action |
+|---------|--------|
+| `/help` | Show help screen |
+| `/credits` | Show credits |
+| `/debug` | Debug information |
+| `/update` | Check for updates |
+| `/exit` | Exit application |
 
 ### Navigation Flow
 ```
@@ -122,57 +132,26 @@ Main Menu
 
 ## ⚙️ Configuration
 
+Edit `ROOT/sfu-tools/config.json` to customize tools and categories.
+
 ### Adding Custom Tools
 
 1. **Create your PowerShell script** in `ROOT/sfu-tools/`
    ```powershell
    # My-CustomTool.ps1
    Write-Host "Running custom tool..." -ForegroundColor Green
-   # Your code here
    ```
 
-2. **Edit `config.json`** to add your tool:
+2. **Add to `config.json`**:
    ```json
    {
        "name": "My Custom Tool",
-       "description": "Brief description of what it does",
-       "command": "& '$PSScriptRoot\\sfu-tools\\My-CustomTool.ps1'",
-       "hotkey": "M"
+       "description": "What it does",
+       "command": "& '$PSScriptRoot\\sfu-tools\\My-CustomTool.ps1'"
    }
    ```
 
 3. **Restart MTCP** to see your new tool
-
-### Configuration File Structure
-
-```json
-{
-    "meta": {
-        "version": "0.1.0",
-        "author": "Your Name"
-    },
-    "categories": [
-        {
-            "name": "Category Name",
-            "description": "Category description",
-            "subcategories": [
-                {
-                    "name": "Subcategory Name",
-                    "tools": [...]
-                }
-            ],
-            "tools": [
-                {
-                    "name": "Tool Name",
-                    "description": "Tool description",
-                    "command": "command to execute",
-                    "hotkey": "H"
-                }
-            ]
-        }
-    ]
-}
-```
 
 ## 🔧 Advanced Features
 
@@ -181,54 +160,42 @@ Main Menu
 MTCP integrates with Faronics Deep Freeze:
 - Automatic status detection via `DFC.exe`
 - Toggle states: FROZEN ↔ THAWED
-- Password-protected operations
-- Supports all DFC commands:
+- Dedicated screen with Y/N/Esc controls
+- Supports DFC commands:
   - `/BOOTFROZEN` - Restart frozen
   - `/BOOTTHAWED` - Restart thawed
-  - `/LOCK` - Disable input
-  - `/UNLOCK` - Enable input
 
-### Update System
+### Building from Source
 
-The auto-update system:
-1. Checks GitHub on startup (background)
-2. Compares semantic versions (e.g., 0.1.0 → 0.2.0)
-3. Notifies when updates are available
-4. Downloads from: `https://github.com/TA-Softies/mtcp/archive/refs/heads/main.zip`
-5. Creates backup before installation
-6. Extracts and replaces files
-7. Restarts application automatically
-8. Restores backup if update fails
-
-### Custom Scripts Location
-
-All custom scripts should be placed in:
-```
-ROOT/sfu-tools/
-```
-
-Reference them in config.json using `$PSScriptRoot`:
-```json
-"command": "& '$PSScriptRoot\\sfu-tools\\Your-Script.ps1'"
+```powershell
+cd ROOT
+pip install pyinstaller
+pyinstaller mtcp.spec --noconfirm
+# Output: dist/MTCP.exe
 ```
 
 ## 📁 Project Structure
 
 ```
-SFU-TOOLS/
-├── README.md                      # This file
+SFU-TOOLS/                         # Git repository root
+├── .github/workflows/build.yml    # CI/CD workflow
 ├── .gitignore                     # Git exclusions
-├── code.py                        # CircuitPython code (optional)
-├── Setup-RoundingUtilUSB.ps1     # USB utility setup
-├── Steps.md                       # Setup steps
-└── ROOT/                          # Main application folder
-    ├── Launch.ps1                 # Main launcher
-    ├── Start_Panel.bat            # Entry point
-    ├── README.md                  # Application docs
+├── README.md                      # This file
+├── LICENSE                        # MIT License
+└── ROOT/                          # MTCP application
+    ├── Launch.ps1                 # Smart launcher
+    ├── mtcp.spec                  # PyInstaller spec
+    ├── mtcp/                      # Python package
+    │   ├── __main__.py            # Entry point
+    │   ├── app.py                 # Main Textual app
+    │   ├── screens.py             # Modal screens
+    │   ├── sysinfo.py             # System info (WMI)
+    │   ├── tools.py               # Tool execution
+    │   ├── theme.tcss             # CSS theme
+    │   ├── requirements.txt       # Dependencies
+    │   └── icons/                 # App icons
     └── sfu-tools/                 # Tool scripts
         ├── config.json            # Configuration
-        ├── Check-Update.ps1       # Update checker
-        ├── Install-Update.ps1     # Update installer
         ├── Toggle-DeepFreeze.ps1  # DF toggle
         ├── Invoke-CheckDisk.ps1   # Disk checker
         └── [custom scripts...]    # Your tools
@@ -237,11 +204,9 @@ SFU-TOOLS/
 ## 🛡️ Security Notes
 
 - Requires administrator privileges
-- Execution policy set to Bypass for session
-- Passwords stored temporarily in memory only
+- WMI used for system information
 - No credential persistence
-- Update verification via HTTPS
-- Automatic cleanup of temporary files
+- Releases distributed via GitHub
 
 ## 🐛 Troubleshooting
 
@@ -255,50 +220,49 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 
 **Deep Freeze status shows "Not Installed"**
 - Check if `C:\Windows\SysWOW64\DFC.exe` exists
-- Verify Deep Freeze is installed and configured
+- Verify Deep Freeze is properly installed
 
-**Update check fails**
-- Verify internet connectivity
-- Check firewall/proxy settings
-- Ensure GitHub is accessible
+**Python not found**
+- Run `Launch.ps1` - it will auto-install Python 3.12
+- Or manually install from python.org
 
-**Window size issues**
-- MTCP requires 76x35 character window
-- Some terminals don't support resizing
-- Try Windows Terminal or standard cmd.exe
-
-**Unicode characters don't display**
-- Console must support UTF-8
-- Font must include Unicode block characters
-- Try Consolas, Cascadia Code, or Courier New
+**Window rendering issues**
+- Use Windows Terminal for best results
+- Ensure terminal supports UTF-8
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please:
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
 
-### Development Guidelines
-- Use UTF-8 encoding for all files
-- Follow PowerShell best practices
-- Include descriptions for all tools
-- Test with both PowerShell 5.1 and 7+
-- Document new features in README
+### Development Setup
+```powershell
+cd ROOT
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r mtcp/requirements.txt
+pip install pyinstaller  # For building
+python -m mtcp  # Run from source
+```
 
 ## 📝 Changelog
 
-### Version 0.1.0 (Initial Release)
-- Interactive menu-driven interface
-- System information dashboard
-- Categorized tool organization
+### Version 0.3.1
+- Migrated from PowerShell to Python Textual TUI
+- Added live monitoring panel (CPU, RAM, Disk, Network)
+- Modern terminal UI with CSS theming
+- Standalone .exe distribution via PyInstaller
+- GitHub Actions CI/CD for automated builds
+- Smart launcher with release download
+
+### Version 0.1.0 (Legacy)
+- Initial PowerShell-based release
+- Interactive menu interface
 - Deep Freeze integration
 - Auto-update system
-- Optimized navigation rendering
-- Keyboard shortcuts
-- Error handling with BSOD screens
 
 ## 📜 License
 

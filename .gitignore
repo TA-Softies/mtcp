@@ -62,3 +62,26 @@ __pycache__/
 # internal-config.xml
 
 ROOT/sfu-tools/bin/
+
+# Virtual environments
+ROOT/.venv/
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# PyInstaller build outputs
+ROOT/build/
+ROOT/dist/
+build/
+dist/
+*.manifest
+*.spec.bak
+
+# Build outputs
+MTCP.exe
+*.exe.bak
+
+# Python installer cache
+python-installer.exe
