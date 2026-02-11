@@ -39,7 +39,7 @@ $Host.UI.RawUI.ForegroundColor = "White"
 
 # ── Set Console Size ───────────────────────────────────────
 try {
-    $Width = 100
+    $Width = 120
     $Height = 42
     $BufferSize = $Host.UI.RawUI.BufferSize
     $WindowSize = $Host.UI.RawUI.WindowSize

@@ -894,7 +894,7 @@ class MTCPApp(App):
 # Entry point
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-def _set_console_size(width: int = 100, height: int = 42):
+def _set_console_size(width: int = 120, height: int = 42):
     """Set Windows console window size for optimal TUI display."""
     if sys.platform != "win32":
         return
@@ -939,7 +939,7 @@ def _set_console_size(width: int = 100, height: int = 42):
 def main():
     """Entry point for the MTCP application."""
     # Set optimal console size for TUI
-    _set_console_size(100, 42)
+    _set_console_size(120, 42)
     
     app = MTCPApp()
     app.run()
