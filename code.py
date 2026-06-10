@@ -51,6 +51,8 @@ time.sleep(1.5)
 # Ctrl+Shift+Enter (step 4) runs this elevated directly, so no
 # inner Start-Process -Verb RunAs is needed — one UAC prompt total.
 layout.write("powershell -W Hidden -ExecutionPolicy Bypass -C \"")
+# Show a 3-second auto-closing popup so the user knows the device is active.
+layout.write("(New-Object -ComObject WScript.Shell).Popup('Launching Rounding Util USB...',3,'TA Tools',64)|Out-Null;")
 layout.write("$d=(Get-Volume -FileSystemLabel 'CIRCUITPY').DriveLetter; ")
 layout.write("& ($d+':\\ROOT\\Launch.ps1')\"")
 
