@@ -55,10 +55,15 @@ function Wait-ForDrive {
     return $null
 }
 
+$ExcludeDirs = @('.venv', '__pycache__', '.git', 'dist', '.pytest_cache')
+
 function Copy-WithProgress {
     param([string]$Source, [string]$Destination, [string]$Label = "Copying")
     if (Test-Path -LiteralPath $Source -PathType Container) {
-        $files = Get-ChildItem -Path $Source -Recurse -File
+        $files = Get-ChildItem -Path $Source -Recurse -File | Where-Object {
+            $parts = $_.FullName.Substring($Source.Length).TrimStart('\') -split '\\'
+            -not ($parts | Where-Object { $ExcludeDirs -contains $_ })
+        }
         $total = $files.Count
         $i = 0
         foreach ($f in $files) {
