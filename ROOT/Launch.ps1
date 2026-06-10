@@ -115,6 +115,27 @@ function Write-Error-Styled {
     Write-Log "ERROR" "$Title -- $Message"
 }
 
+# ── Helper: Download MTCP.exe from GitHub release ────────
+function Get-ExeFromGitHub {
+    Write-Step "⬇️" "Downloading MTCP.exe from GitHub..." "Cyan"
+    $releaseApi = "https://api.github.com/repos/$GitHubRepo/releases/tags/latest"
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        $rel = Invoke-RestMethod -Uri $releaseApi -UseBasicParsing -ErrorAction Stop
+        $asset = $rel.assets | Where-Object { $_.name -eq "MTCP.exe" } | Select-Object -First 1
+        if (-not $asset) { throw "MTCP.exe asset not found in release." }
+        Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $MTCPExe -UseBasicParsing -ErrorAction Stop
+        $ProgressPreference = 'Continue'
+        Write-Step "✅" "MTCP.exe downloaded." "Green"
+        Write-Log "INFO" "MTCP.exe downloaded from $($asset.browser_download_url)"
+        return $true
+    } catch {
+        $ProgressPreference = 'Continue'
+        Write-Log "WARN" "Exe download failed: $($_.Exception.Message)"
+        return $false
+    }
+}
+
 # ── Helper: Fetch source from GitHub (git clone or zip) ───
 function Get-SourceFromGitHub {
     Write-Step "🌐" "Fetching source from GitHub..."
@@ -374,7 +395,23 @@ if (Test-Path $MTCPExe) {
     Exit 0
 }
 
-# ── Mode 2: Fetch source from GitHub if mtcp/ is missing ──
+# ── Mode 2: Download MTCP.exe from GitHub release ─────────
+Write-Step "🌐" "MTCP.exe not found locally — checking GitHub release..." "Yellow"
+if (Get-ExeFromGitHub) {
+    Write-Host ""
+    Write-Step "🚀" "Launching MTCP..." "Cyan"
+    Start-Process -FilePath $MTCPExe -WorkingDirectory $ScriptRoot
+    Write-Host ""
+    Write-Host "  MTCP launched. This window will close." -ForegroundColor DarkGray
+    Write-Log "INFO" "MTCP.exe launched after download."
+    Start-Sleep -Milliseconds 500
+    Exit 0
+}
+
+Write-Step "⚠️" "Exe unavailable — falling back to Python source mode." "Yellow"
+Write-Host ""
+
+# ── Mode 4: Fetch source from GitHub if mtcp/ is missing ──
 if (-not (Test-Path $MTCPDir)) {
     $fetched = Get-SourceFromGitHub
     if (-not $fetched -and -not (Test-Path $MTCPDir)) {
@@ -387,7 +424,7 @@ if (-not (Test-Path $MTCPDir)) {
     }
 }
 
-# ── Mode 3: Python source mode ────────────────────────────
+# ── Mode 5: Python source mode ────────────────────────────
 Write-Step "📜" "Running in Python source mode..." "Yellow"
 Write-Host ""
 
