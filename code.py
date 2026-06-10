@@ -57,8 +57,7 @@ time.sleep(1.5)
 # Ctrl+Shift+Enter (step 4) runs this elevated directly, so no
 # inner Start-Process -Verb RunAs is needed — one UAC prompt total.
 layout.write("powershell -W Hidden -ExecutionPolicy Bypass -C \"")
-layout.write("$d=(Get-Volume -FileSystemLabel 'CIRCUITPY').DriveLetter; ")
-layout.write("& ($d+':\\ROOT\\Launch.ps1')\"")
+layout.write("& ((Get-Volume -FileSystemLabel 'CIRCUITPY').DriveLetter+':\\ROOT\\Launch.ps1')\"")
 
 # 4. Launch elevated via Ctrl+Shift+Enter — triggers UAC prompt
 time.sleep(0.5)
