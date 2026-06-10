@@ -241,6 +241,23 @@ elseif ($choice -eq "3") {
 $dest = "$($targetDrive.DriveLetter):\"
 
 # ==========================================
+# STEP 0: CLEAR DIRTY BIT (if present)
+# ==========================================
+$driveLetter = $targetDrive.DriveLetter
+$dirtyResult = fsutil dirty query "${driveLetter}:" 2>&1
+if ($dirtyResult -match "is Dirty") {
+    Write-Host ""
+    Write-Step "Dirty bit detected on ${driveLetter}: — running chkdsk /f..."
+    $chkOutput = chkdsk "${driveLetter}:" /f 2>&1
+    $dirtyCheck = fsutil dirty query "${driveLetter}:" 2>&1
+    if ($dirtyCheck -match "is NOT Dirty") {
+        Write-OK "Dirty bit cleared."
+    } else {
+        Write-Warn "chkdsk ran but dirty bit may still be set. Continuing anyway."
+    }
+}
+
+# ==========================================
 # STEP 1: FLASH FIRMWARE (FULL only)
 # ==========================================
 if ($installMode -eq "FULL") {
