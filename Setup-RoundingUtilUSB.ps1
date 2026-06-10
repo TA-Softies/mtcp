@@ -300,7 +300,7 @@ Write-OK "code.py"
 $destRoot = Join-Path $dest "ROOT"
 if (Test-Path $destRoot) {
     Write-Step "Removing old ROOT..."
-    Remove-Item $destRoot -Recurse -Force
+    cmd /c rmdir /s /q "$destRoot"
 }
 Copy-WithProgress -Source $RootPath -Destination $destRoot -Label "Copying ROOT folder"
 Write-OK "ROOT folder"
