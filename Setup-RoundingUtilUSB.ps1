@@ -248,12 +248,16 @@ $dirtyResult = fsutil dirty query "${driveLetter}:" 2>&1
 if ($dirtyResult -match "is Dirty") {
     Write-Host ""
     Write-Step "Dirty bit detected on ${driveLetter}: - running chkdsk /f..."
-    $chkOutput = chkdsk "${driveLetter}:" /f 2>&1
-    $dirtyCheck = fsutil dirty query "${driveLetter}:" 2>&1
-    if ($dirtyCheck -match "is NOT Dirty") {
-        Write-OK "Dirty bit cleared."
-    } else {
-        Write-Warn "chkdsk ran but dirty bit may still be set. Continuing anyway."
+    try {
+        $chkOutput = & chkdsk "${driveLetter}:" /f /x 2>&1
+        $dirtyCheck = fsutil dirty query "${driveLetter}:" 2>&1
+        if ($dirtyCheck -match "is NOT Dirty") {
+            Write-OK "Dirty bit cleared."
+        } else {
+            Write-Warn "chkdsk ran but dirty bit may still be set. Continuing anyway."
+        }
+    } catch {
+        Write-Warn "Could not run chkdsk (drive may be locked). Continuing anyway."
     }
 }
 
