@@ -43,7 +43,7 @@ led.value = True
 kbd.press(Keycode.GUI, Keycode.D)
 time.sleep(0.1)
 kbd.release_all()
-time.sleep(0.5)
+time.sleep(2.0)
 
 # 2. Open Run Dialog
 kbd.press(Keycode.GUI, Keycode.R)
