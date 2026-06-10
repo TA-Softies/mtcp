@@ -247,7 +247,7 @@ $driveLetter = $targetDrive.DriveLetter
 $dirtyResult = fsutil dirty query "${driveLetter}:" 2>&1
 if ($dirtyResult -match "is Dirty") {
     Write-Host ""
-    Write-Step "Dirty bit detected on ${driveLetter}: — running chkdsk /f..."
+    Write-Step "Dirty bit detected on ${driveLetter}: - running chkdsk /f..."
     $chkOutput = chkdsk "${driveLetter}:" /f 2>&1
     $dirtyCheck = fsutil dirty query "${driveLetter}:" 2>&1
     if ($dirtyCheck -match "is NOT Dirty") {
