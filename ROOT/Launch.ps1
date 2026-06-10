@@ -191,13 +191,19 @@ function Find-Python {
     # 1. Check venv first
     $venvPython = Join-Path $VenvDir "Scripts\python.exe"
     if (Test-Path $venvPython) {
-        $ver = & $venvPython --version 2>&1
-        if ($ver -match "Python (\d+)\.(\d+)") {
-            $major = [int]$Matches[1]
-            $minor = [int]$Matches[2]
-            if ($major -ge $MinPythonMajor -and $minor -ge $MinPythonMinor) {
-                return $venvPython
+        try {
+            $ver = & $venvPython --version 2>&1
+            if ($ver -match "Python (\d+)\.(\d+)") {
+                $major = [int]$Matches[1]
+                $minor = [int]$Matches[2]
+                if ($major -ge $MinPythonMajor -and $minor -ge $MinPythonMinor) {
+                    return $venvPython
+                }
             }
+        } catch {
+            # Venv points to a removed Python install — delete it so Setup-Venv rebuilds it
+            Write-Log "WARN" "Stale venv detected (base Python missing). Removing $VenvDir."
+            Remove-Item $VenvDir -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
     
