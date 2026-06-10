@@ -21,17 +21,20 @@ except ImportError:
     while True:
         time.sleep(0.1)
 
+# --- LED SETUP ---
+led_pin = board.LED if hasattr(board, "LED") else (board.GP25 if hasattr(board, "GP25") else board.GP23)
+led = digitalio.DigitalInOut(led_pin)
+led.direction = digitalio.Direction.OUTPUT
+
 # --- SETUP ---
 try:
     kbd = Keyboard(usb_hid.devices)
     layout = KeyboardLayoutUS(kbd)
-except:
-    time.sleep(1)
-
-# --- LED SETUP ---
-led_pin = board.GP23 if hasattr(board, "GP23") else board.GP25
-led = digitalio.DigitalInOut(led_pin)
-led.direction = digitalio.Direction.OUTPUT
+except Exception:
+    # HID init failed — blink fast forever so the problem is visible.
+    while True:
+        led.value = not led.value
+        time.sleep(0.15)
 
 # --- PAYLOAD EXECUTION ---
 led.value = True

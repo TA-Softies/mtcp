@@ -27,8 +27,9 @@ $MinPythonMajor = 3
 $MinPythonMinor = 10
 $PythonInstallerUrl = "https://www.python.org/ftp/python/3.12.8/python-3.12.8-amd64.exe"
 $PythonInstallerFile = Join-Path $env:TEMP "python-installer.exe"
-$GitHubRepo = "TA-Softies/mtcp"
-$GitHubReleaseApi = "https://api.github.com/repos/$GitHubRepo/releases/latest"
+$GitHubRepo    = "TA-Softies/mtcp"
+$GitHubRepoUrl = "https://github.com/$GitHubRepo"
+$GitHubZipUrl  = "$GitHubRepoUrl/archive/refs/heads/main.zip"
 
 # ── UTF-8 ──────────────────────────────────────────────────
 chcp 65001 | Out-Null
@@ -100,64 +101,75 @@ function Write-Error-Styled {
     Write-Host ""
 }
 
-# ── Helper: Download from GitHub Releases ─────────────────
-function Get-LatestRelease {
-    Write-Step "🌐" "Checking for latest release..."
-    
-    try {
-        $ProgressPreference = 'SilentlyContinue'
-        $headers = @{ "User-Agent" = "MTCP-Launcher" }
-        $release = Invoke-RestMethod -Uri $GitHubReleaseApi -Headers $headers -TimeoutSec 10
-        $ProgressPreference = 'Continue'
-        
-        $asset = $release.assets | Where-Object { $_.name -eq "MTCP.exe" } | Select-Object -First 1
-        
-        if ($asset) {
-            Write-SubStep "Found release: $($release.tag_name)"
-            return @{
-                Version = $release.tag_name
-                DownloadUrl = $asset.browser_download_url
-                Size = $asset.size
-            }
-        }
-    } catch {
-        Write-SubStep "Could not check releases: $($_.Exception.Message)" "DarkGray"
-    }
-    
-    return $null
-}
+# ── Helper: Fetch source from GitHub (git clone or zip) ───
+function Get-SourceFromGitHub {
+    Write-Step "🌐" "Fetching source from GitHub..."
 
-function Download-MTCP {
-    param([hashtable]$ReleaseInfo)
-    
-    Write-Step "📥" "Downloading MTCP $($ReleaseInfo.Version)..."
-    $sizeMB = [math]::Round($ReleaseInfo.Size / 1MB, 1)
-    Write-SubStep "Size: $sizeMB MB"
-    
+    $tmpDir = Join-Path $env:TEMP "mtcp_src_$([System.IO.Path]::GetRandomFileName().Split('.')[0])"
+    $tmpZip = "$tmpDir.zip"
+
+    # --- Try git clone first ---
+    $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCmd) {
+        Write-SubStep "Cloning $GitHubRepoUrl ..."
+        try {
+            if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
+            & git clone --quiet --depth 1 $GitHubRepoUrl $tmpDir | Out-Null
+            if ($LASTEXITCODE -eq 0 -and (Test-Path (Join-Path $tmpDir "ROOT"))) {
+                Copy-SourceFiles -SrcRoot (Join-Path $tmpDir "ROOT")
+                Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+                Write-Step "✅" "Source ready." "Green"
+                return $true
+            }
+        } catch {}
+        Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    # --- Fall back to zip download ---
+    Write-SubStep "Downloading archive from $GitHubZipUrl ..."
     try {
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $ReleaseInfo.DownloadUrl -OutFile $MTCPExe -UseBasicParsing
+        Invoke-WebRequest -Uri $GitHubZipUrl -OutFile $tmpZip -UseBasicParsing
         $ProgressPreference = 'Continue'
-        
-        if (Test-Path $MTCPExe) {
-            Write-Step "✅" "Downloaded successfully!" "Green"
-            
-            # Remove Python source files to save space (keep sfu-tools config)
-            if (Test-Path $MTCPDir) {
-                Write-SubStep "Cleaning up Python source files..."
-                Remove-Item -Path $MTCPDir -Recurse -Force -ErrorAction SilentlyContinue
-            }
-            if (Test-Path $VenvDir) {
-                Remove-Item -Path $VenvDir -Recurse -Force -ErrorAction SilentlyContinue
-            }
-            
+
+        if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force }
+        Expand-Archive -Path $tmpZip -DestinationPath $tmpDir -Force
+        Remove-Item $tmpZip -Force -ErrorAction SilentlyContinue
+
+        # Zip extracts to mtcp-main/ (or similar)
+        $inner = Get-ChildItem -Path $tmpDir -Directory | Select-Object -First 1
+        $srcRoot = Join-Path $inner.FullName "ROOT"
+        if (Test-Path $srcRoot) {
+            Copy-SourceFiles -SrcRoot $srcRoot
+            Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Step "✅" "Source ready." "Green"
             return $true
         }
     } catch {
         Write-Error-Styled "Download Failed" $_.Exception.Message
     }
-    
+
+    Remove-Item $tmpDir  -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $tmpZip  -Force          -ErrorAction SilentlyContinue
     return $false
+}
+
+function Copy-SourceFiles {
+    param([string]$SrcRoot)
+    # mtcp package (always overwrite)
+    $srcMtcp = Join-Path $SrcRoot "mtcp"
+    if (Test-Path $srcMtcp) {
+        if (Test-Path $MTCPDir) { Remove-Item $MTCPDir -Recurse -Force }
+        Copy-Item -Path $srcMtcp -Destination $ScriptRoot -Recurse -Force
+        Write-SubStep "mtcp/ updated."
+    }
+    # sfu-tools (only if missing locally)
+    $srcSfu  = Join-Path $SrcRoot "sfu-tools"
+    $destSfu = Join-Path $ScriptRoot "sfu-tools"
+    if ((Test-Path $srcSfu) -and (-not (Test-Path $destSfu))) {
+        Copy-Item -Path $srcSfu -Destination $ScriptRoot -Recurse -Force
+        Write-SubStep "sfu-tools/ installed."
+    }
 }
 
 # ── Helper: Find Python ───────────────────────────────────
@@ -341,38 +353,22 @@ if (Test-Path $MTCPExe) {
     Exit 0
 }
 
-# ── Mode 2: Try to download from GitHub releases ──────────
-$release = Get-LatestRelease
-
-if ($release) {
-    $downloaded = Download-MTCP -ReleaseInfo $release
-    
-    if ($downloaded -and (Test-Path $MTCPExe)) {
+# ── Mode 2: Fetch source from GitHub if mtcp/ is missing ──
+if (-not (Test-Path $MTCPDir)) {
+    $fetched = Get-SourceFromGitHub
+    if (-not $fetched -and -not (Test-Path $MTCPDir)) {
+        Write-Error-Styled "Missing Source" "Could not fetch source from GitHub."
+        Write-Host "  Clone manually: git clone $GitHubRepoUrl" -ForegroundColor Cyan
         Write-Host ""
-        Write-Step "🚀" "Launching MTCP..." "Cyan"
-        
-        Start-Process -FilePath $MTCPExe -WorkingDirectory $ScriptRoot
-        
-        Write-Host ""
-        Write-Host "  MTCP launched. This window will close." -ForegroundColor DarkGray
-        Start-Sleep -Milliseconds 500
-        Exit 0
+        Write-Host "  Press any key to exit..." -ForegroundColor Gray
+        $null = [Console]::ReadKey($true)
+        Exit 1
     }
 }
 
-# ── Mode 3: Fall back to Python source ────────────────────
-Write-Step "📜" "No executable found. Using Python source mode..." "Yellow"
+# ── Mode 3: Python source mode ────────────────────────────
+Write-Step "📜" "Running in Python source mode..." "Yellow"
 Write-Host ""
-
-# Check for Python source files
-if (-not (Test-Path $MTCPDir)) {
-    Write-Error-Styled "Missing Source" "Neither MTCP.exe nor mtcp/ source folder found."
-    Write-Host "  Download MTCP from: https://github.com/$GitHubRepo/releases" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "  Press any key to exit..." -ForegroundColor Gray
-    $null = [Console]::ReadKey($true)
-    Exit 1
-}
 
 # Find or install Python
 Write-Step "🔍" "Checking for Python $MinPythonMajor.$MinPythonMinor+..."
